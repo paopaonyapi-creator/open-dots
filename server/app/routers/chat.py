@@ -83,7 +83,9 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
     history = storage_service.get_messages(thread_id=thread_id)
     # Resolve the bot through the thread registry (legacy main threads use the bot id).
     thread_record = storage_service.get_thread(thread_id)
-    thread_bot_id = (thread_record.get("bot_id") if thread_record else None) or thread_id
+    thread_bot_id = thread_id
+    if isinstance(thread_record, dict) and thread_record.get("bot_id"):
+        thread_bot_id = thread_record["bot_id"]
     storage_service.ensure_thread(thread_bot_id, thread_id)
     bots = storage_service.get_bots()
     current_bot = next((b for b in bots if b["id"] == thread_bot_id), None)
