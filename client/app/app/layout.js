@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Open Dots App',
-  description: 'The Open Dots self-hosted AI workspace.',
+  title: 'Dots by Pao — App',
+  description: 'The Dots by Pao self-hosted AI workspace (forked from Open Dots).',
   robots: { index: false, follow: false },
 };
 

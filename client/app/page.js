@@ -13,22 +13,22 @@ const alternatives = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100">
+    <main className="min-h-screen text-zinc-100">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link href="/" className="text-lg font-semibold">Open Dots</Link>
+        <Link href="/" className="text-lg font-semibold">Dots <span className="text-[rgba(10,132,255,0.9)]">by Pao</span></Link>
         <nav className="flex items-center gap-5 text-sm text-zinc-300">
-          <a href="https://github.com/Anil-matcha/open-dots">GitHub</a>
-          <Link href="/app" className="rounded-lg bg-white px-4 py-2 font-medium text-zinc-950">Open the app</Link>
+          <a href="https://github.com/paopaonyapi-creator/open-dots">GitHub</a>
+          <Link href="/app" className="btn-accent rounded-lg px-4 py-2 font-medium">Open the app</Link>
         </nav>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-16 md:pt-24">
-        <p className="mb-5 text-sm font-medium uppercase tracking-[0.2em] text-violet-300">Open source · self hosted · MIT licensed</p>
-        <h1 className="max-w-4xl text-4xl font-semibold tracking-tight md:text-6xl">An open-source personal AI agent workspace you can self-host</h1>
-        <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300">Looking for a self-hosted AI agent or an open-source alternative to OpenAI Dots, Meta Muse, Grok Bot, Instinct, Manus Cue, Claude Cowork, or ChatGPT agent? Open Dots is an MIT-licensed workspace for chat, selected tools and connectors, computer tasks, and approval-gated actions. Run it yourself, inspect the code, and adapt it to your workflow.</p>
+        <p className="mb-5 text-sm font-medium uppercase tracking-[0.2em] text-[rgba(10,132,255,0.85)]">Self hosted · forked from Open Dots · MIT licensed</p>
+        <h1 className="max-w-4xl text-4xl font-semibold tracking-tight md:text-6xl">Your personal AI agent workspace, running on your own machine</h1>
+        <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300">Dots by Pao is a customized fork of the MIT-licensed Open Dots workspace: streaming chat with assistant personas, live model discovery from any OpenAI Responses-compatible endpoint, connector actions, computer tasks, and approval-gated operations — restyled with an Apple Liquid Glass interface.</p>
         <div className="mt-8 flex flex-wrap gap-4">
-          <Link href="/app" className="rounded-lg bg-violet-500 px-5 py-3 font-medium text-white hover:bg-violet-400">Try Open Dots</Link>
-          <a href="https://github.com/Anil-matcha/open-dots" className="rounded-lg border border-zinc-700 px-5 py-3 font-medium hover:bg-zinc-900">View source on GitHub</a>
+          <Link href="/app" className="btn-accent rounded-lg px-5 py-3 font-medium">Open Dots by Pao</Link>
+          <a href="https://github.com/paopaonyapi-creator/open-dots" className="glass-hover rounded-lg border border-white/12 px-5 py-3 font-medium">View source on GitHub</a>
         </div>
         <p className="mt-4 text-sm text-zinc-500">Early prototype for local experimentation. Review the documented security and deployment limitations before hosting it for others.</p>
       </section>
@@ -64,13 +64,13 @@ export default function Home() {
           <h2 className="mt-10 text-2xl font-semibold">Questions about this open-source AI agent</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <article className="rounded-xl border border-zinc-800 p-5"><h3 className="font-semibold">Can I self-host Open Dots?</h3><p className="mt-2 leading-7 text-zinc-300">Yes. The API and web client can be run on infrastructure you control. You’ll need to configure a compatible inference service and follow the setup and security notes in the README.</p></article>
-            <article className="rounded-xl border border-zinc-800 p-5"><h3 className="font-semibold">Which AI models does Open Dots support?</h3><p className="mt-2 leading-7 text-zinc-300">The app lets you configure model IDs, but the bundled inference adapter expects a specific prediction API contract. It is not a universal connector for every model provider or OpenAI-compatible API.</p></article>
+            <article className="rounded-xl border border-zinc-800 p-5"><h3 className="font-semibold">Which AI models does Dots by Pao support?</h3><p className="mt-2 leading-7 text-zinc-300">Point it at any OpenAI Responses-compatible endpoint and the app discovers the available model list live from the provider. The legacy prediction-API contract remains available as an opt-in wire mode.</p></article>
             <article className="rounded-xl border border-zinc-800 p-5"><h3 className="font-semibold">Is Open Dots a replacement for these personal agents?</h3><p className="mt-2 leading-7 text-zinc-300">It is an open-source project to evaluate when self-hosting and inspecting the implementation matter. It is still a prototype and does not match the feature set or convenience of the managed products.</p></article>
             <article className="rounded-xl border border-zinc-800 p-5"><h3 className="font-semibold">Is Open Dots safe for unattended computer use?</h3><p className="mt-2 leading-7 text-zinc-300">The project routes higher-risk operations through approvals, but its optional computer runtime is not hardened for hostile websites. It is intended for local experimentation; review the limitations before deployment.</p></article>
           </div>
         </div>
       </section>
-      <footer className="border-t border-zinc-800 px-6 py-8 text-center text-sm text-zinc-500">Open Dots · MIT license · <a className="hover:text-white" href="https://github.com/Anil-matcha/open-dots">Source code</a></footer>
+      <footer className="border-t border-zinc-800 px-6 py-8 text-center text-sm text-zinc-500">Dots by Pao · built on <a className="hover:text-white" href="https://github.com/Anil-matcha/open-dots">Open Dots</a> (MIT) · <a className="hover:text-white" href="https://github.com/paopaonyapi-creator/open-dots">Fork source</a></footer>
     </main>
   );
 }

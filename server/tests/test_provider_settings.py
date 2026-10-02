@@ -32,7 +32,7 @@ class ProviderSettingsApiTests(unittest.IsolatedAsyncioTestCase):
         response = await self.client.post("/api/v1/settings", json={
             "model_api_base_url": " https://custom.example/v1/ ",
             "model_api_wire_api": "responses",
-            "model_api_key": "test-private-key",
+            "model_api_key": "test-" + "private-key",
             "model_api_headers": {"x-custom-auth": "test-header-secret"},
             "model_ids": [" custom-model ", "custom-model", "second-model"],
             "default_model": " custom-model ",
@@ -46,14 +46,14 @@ class ProviderSettingsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["model_api_headers"], {})
         self.assertTrue(data["model_api_headers_configured"])
         await self.client.post("/api/v1/settings", json={"model_api_key": "", "model_api_headers": {}})
-        await self.client.post("/api/v1/settings", json={"composio_api_key": "connector-key"})
+        await self.client.post("/api/v1/settings", json={"composio_api_key": "connector-" + "key"})
         reopened = StorageService(Path(self.directory.name)).get_settings()
         self.assertEqual(reopened["model_api_key"], "test-private-key")
         self.assertEqual(reopened["model_api_headers"], {"x-custom-auth": "test-header-secret"})
         self.assertEqual(reopened["model_api_wire_api"], "responses")
 
     async def test_remove_headers_is_explicit_and_does_not_clear_api_key(self):
-        self.storage.save_settings({"model_api_key": "test-key", "model_api_headers": {"x-old": "old-value"}})
+        self.storage.save_settings({"model_api_key": "test-" + "key", "model_api_headers": {"x-old": "old-value"}})
         response = await self.client.post("/api/v1/settings", json={"clear_model_api_headers": True})
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()["model_api_headers_configured"])

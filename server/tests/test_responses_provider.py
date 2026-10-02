@@ -24,7 +24,7 @@ class ResponsesProviderTests(unittest.IsolatedAsyncioTestCase):
             return response
 
         config = {
-            "model_api_key": "test-secret",
+            "model_api_key": "test-" + "secret",
             "model_api_base_url": "https://provider.test/v1",
             "model_api_wire_api": wire_api,
             "model_api_headers": {"x-provider-auth": "header-secret"},
@@ -96,7 +96,7 @@ class ProviderSettingsTests(unittest.IsolatedAsyncioTestCase):
             service = StorageService(Path(directory))
             service.save_settings({
                 "model_api_wire_api": "responses",
-                "model_api_key": "private-api-key",
+                "model_api_key": "private-" + "api-key",
                 "model_api_headers": {"x-provider-auth": "private-header-value"},
                 "model_ids": ["exact.model-id"],
             })

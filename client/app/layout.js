@@ -1,11 +1,11 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Open Dots — Open-Source Personal AI Agent Workspace',
-  description: 'A self-hosted, MIT-licensed personal AI agent workspace. Explore an open-source alternative to OpenAI Dots, Meta Muse, Grok Bot, Instinct, Manus Cue, Claude Cowork, and ChatGPT agent.',
+  title: 'Dots by Pao — Personal AI Agent Workspace',
+  description: 'A self-hosted personal AI agent workspace by Pao, built on the open-source Open Dots project (MIT). Chat, connectors, computer tasks, and approval-gated actions.',
   openGraph: {
-    title: 'Open Dots — Open-Source Personal AI Agent Workspace',
-    description: 'Self-hostable AI chat, connectors, computer tasks, and approval-gated actions.',
+    title: 'Dots by Pao — Personal AI Agent Workspace',
+    description: 'Self-hostable AI chat, connectors, computer tasks, and approval-gated actions. Forked from Open Dots (MIT).',
     type: 'website',
   },
 };

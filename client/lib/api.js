@@ -6,6 +6,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (
 
 let sessionPromise = null;
 
+// Auth endpoints are fetched directly (no session preflight); keep the URL
+// construction in one helper so every auth call shares the same base.
+function authUrl(path) {
+  return API_BASE_URL + path;
+}
+
 export class AuthenticationError extends Error {}
 
 function sessionExpired() {
@@ -18,7 +24,7 @@ function sessionExpired() {
 export async function ensureSession() {
   if (typeof window === 'undefined') return null;
   if (!sessionPromise) {
-    sessionPromise = fetch(`${API_BASE_URL}/auth/session`, {
+    sessionPromise = fetch(authUrl('/auth/session'), {
       credentials: 'include',
     })
       .then((res) => {
@@ -53,7 +59,7 @@ async function apiFetch(url, options = {}) {
 }
 
 export async function login(token) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await fetch(authUrl('/auth/login'), {
     method: 'POST', credentials: 'include',
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
   });
@@ -65,7 +71,7 @@ export async function login(token) {
 }
 
 export async function logout() {
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+  const response = await fetch(authUrl('/auth/logout'), { method: 'POST', credentials: 'include' });
   if (!response.ok) throw new Error('Could not sign out. Reconnect to the API and retry.');
   sessionExpired();
 }

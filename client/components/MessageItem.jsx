@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiCopy, FiCheck } from 'react-icons/fi';
 
 function formatMsgTime(createdAt) {
   if (!createdAt) return '';
@@ -15,11 +15,22 @@ export default function MessageItem({ message }) {
   const isUser = message.sender === 'user';
   const isError = message.isError || message.text?.toLowerCase().startsWith('error:');
   const formattedTime = formatMsgTime(message.created_at);
+  const [copied, setCopied] = useState(false);
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(message.text || '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (err) {
+      console.warn('Copy failed:', err);
+    }
+  };
 
   if (isUser) {
     return (
-      <div className="flex justify-end my-1.5">
-        <div className="dark-bubble-user px-3.5 py-2 text-xs font-sans max-w-md shadow-md">
+      <div className="flex justify-end my-1.5 group">
+        <div className="dark-bubble-user px-3.5 py-2 text-xs font-sans max-w-md">
           {message.image_url && (
             <img
               src={message.image_url}
@@ -27,10 +38,10 @@ export default function MessageItem({ message }) {
               className="max-w-full max-h-56 rounded-lg object-cover border border-white/10 mb-1.5"
             />
           )}
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 items-end">
             <span className="break-words">{message.text}</span>
             {formattedTime && (
-              <span className="text-[10px] text-zinc-300/70 font-mono tracking-tight select-none flex-shrink-0 self-end ml-auto">
+              <span className="text-[10px] text-white/70 font-mono tracking-tight select-none flex-shrink-0 self-end ml-auto">
                 {formattedTime}
               </span>
             )}
@@ -43,7 +54,7 @@ export default function MessageItem({ message }) {
   if (isError) {
     return (
       <div className="flex justify-start my-2">
-        <div className="dark-bubble-error px-4 py-1.5 text-xs font-mono max-w-md flex items-center justify-between gap-3 shadow-sm">
+        <div className="dark-bubble-error px-4 py-1.5 text-xs font-mono max-w-md flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <FiX className="text-red-500 text-sm flex-shrink-0" />
             <span className="truncate">{message.text}</span>
@@ -57,8 +68,8 @@ export default function MessageItem({ message }) {
   }
 
   return (
-    <div className="flex justify-start my-2">
-      <div className="dark-bubble-bot px-5 py-3 text-xs font-sans max-w-2xl shadow-md text-zinc-100 leading-relaxed overflow-hidden">
+    <div className="flex justify-start my-2 group">
+      <div className="relative dark-bubble-bot px-5 py-3 text-xs font-sans max-w-2xl text-zinc-100 leading-relaxed overflow-hidden">
         <ReactMarkdown
           components={{
             p: ({ node, ...props }) => <div className="mb-2 last:mb-0 leading-relaxed" {...props} />,
@@ -67,13 +78,13 @@ export default function MessageItem({ message }) {
               const isInline = inline || (!className && typeof children === 'string' && !children.includes('\n'));
               if (isInline) {
                 return (
-                  <code className="bg-[#2a2a30] text-cyan-300 px-1.5 py-0.5 rounded font-mono text-[11px]" {...props}>
+                  <code className="bg-white/10 text-cyan-300 px-1.5 py-0.5 rounded font-mono text-[11px]" {...props}>
                     {children}
                   </code>
                 );
               }
               return (
-                <pre className="bg-[#141416] p-3 rounded-xl border border-[#2b2b32] text-zinc-300 font-mono text-[11px] overflow-x-auto my-2">
+                <pre className="bg-black/40 p-3 rounded-xl border border-white/10 text-zinc-300 font-mono text-[11px] overflow-x-auto my-2">
                   <code {...props}>{children}</code>
                 </pre>
               );
@@ -84,16 +95,26 @@ export default function MessageItem({ message }) {
         >
           {message.text}
         </ReactMarkdown>
-        {formattedTime && (
-          <div className="text-[10px] text-zinc-400 text-right mt-1 font-mono tracking-tight select-none">
-            {formattedTime}
-          </div>
-        )}
+
+        <div className="flex items-center justify-between mt-1.5">
+          {formattedTime && (
+            <span className="text-[10px] text-zinc-500 font-mono tracking-tight select-none">
+              {formattedTime}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={copyText}
+            title={copied ? 'Copied!' : 'Copy message'}
+            className={`ml-auto flex items-center gap-1 text-[10px] font-medium rounded-lg px-2 py-1 transition-all glass-hover border border-transparent hover:border-white/10 ${
+              copied ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-200'
+            }`}
+          >
+            {copied ? <FiCheck className="text-xs" /> : <FiCopy className="text-xs" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-
-
-

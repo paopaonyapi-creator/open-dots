@@ -4,6 +4,22 @@ import React, { useState } from 'react';
 import { FiSearch, FiPlus, FiSettings, FiActivity, FiLogOut } from 'react-icons/fi';
 import MascotAvatar from './MascotAvatar';
 
+function BotAvatar({ bot }) {
+  const emoji = (bot?.originalBot?.avatar || '').trim();
+  if (emoji) {
+    return (
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center text-base flex-shrink-0 select-none border border-white/10 shadow-inner"
+        style={{ background: `${bot.originalBot?.accent_color || '#3b82f6'}26` }}
+        aria-hidden="true"
+      >
+        {emoji}
+      </div>
+    );
+  }
+  return <MascotAvatar type={bot.avatarType} size="md" />;
+}
+
 export default function Sidebar({
   onLogout,
   bots,
@@ -16,62 +32,18 @@ export default function Sidebar({
   onOpenNewBot
 }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isIssueDismissed, setIsIssueDismissed] = useState(false);
   // userName comes from Dashboard (synced with AppSettingsDrawer in real-time)
   const displayName = userName || 'You';
 
-
-  // Default bot list fallback matching the exact mockup items if bots array is empty or customized
-  const defaultMockupBots = [
-    {
-      id: 'bot-new-error',
-      name: 'New Bot',
-      subtitle: 'Your assistants will show up here',
-      avatarType: 'warning',
-      time: '2:49 PM',
-      isError: true,
-    },
-    {
-      id: 'bot-new-pink',
-      name: 'New Bot',
-      subtitle: 'What do you mostly want help with?',
-      avatarType: 'pink',
-      time: '',
-      isError: false,
-    },
-    {
-      id: 'bot-new-blue-1',
-      name: 'New Bot',
-      subtitle: 'What do you mostly want help with?',
-      avatarType: 'blue',
-      time: '',
-      isError: false,
-    },
-    {
-      id: 'bot-milind',
-      name: 'Milind',
-      subtitle: 'What do you mostly want help with?',
-      avatarType: 'blue',
-      time: '',
-      isError: false,
-    },
-  ];
-
-  // Merge real bots or fallback to mockup display
-  const displayBots = bots && bots.length > 0
-    ? bots.map((b, idx) => ({
-        id: b.id,
-        name: b.name,
-        subtitle: b.role || b.description || 'General Intelligence',
-        avatarType: b.isError ? 'warning' : idx % 2 === 1 ? 'pink' : 'blue',
-        time: b.created_at ? new Date(b.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : (b.time || ''),
-        isError: !!b.isError,
-        originalBot: b
-      }))
-    : defaultMockupBots;
-
-
-  const errorCount = displayBots.filter((b) => b.isError).length;
+  const displayBots = (bots || []).map((b) => ({
+    id: b.id,
+    name: b.name,
+    subtitle: b.role || b.description || 'General Intelligence',
+    avatarType: b.isError ? 'warning' : 'blue',
+    time: b.created_at ? new Date(b.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '',
+    isError: !!b.isError,
+    originalBot: b,
+  }));
 
   const filteredBots = displayBots.filter(
     (b) =>
@@ -95,10 +67,17 @@ export default function Sidebar({
             suppressHydrationWarning={true}
             onClick={onOpenNewBot}
             title="Create New Bot"
-            className="text-zinc-400 hover:text-white transition p-1 rounded-md hover:bg-[#222226]"
+            className="text-zinc-400 hover:text-white transition p-1 rounded-md glass-hover"
           >
             <FiPlus className="text-lg" />
           </button>
+        </div>
+
+        {/* Brand */}
+        <div className="px-1 pt-0.5">
+          <h1 className="text-sm font-semibold tracking-tight text-zinc-100">
+            Dots <span className="text-[rgba(10,132,255,0.9)]">by Pao</span>
+          </h1>
         </div>
 
         {/* Rounded Search Bar */}
@@ -110,65 +89,74 @@ export default function Sidebar({
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#222225] border border-[#2c2c30] rounded-xl pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition"
+            className="w-full bg-black/25 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 transition focus:outline-none focus:border-[rgba(10,132,255,0.55)] focus:shadow-[0_0_0_3px_rgba(10,132,255,0.14)]"
           />
         </div>
       </div>
 
       {/* Bot Roster List */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1.5">
-        {filteredBots.map((botItem) => {
-          const isActive = activeBotId === botItem.id || (activeBotId === '' && botItem.id === displayBots[0]?.id);
+        {filteredBots.length === 0 ? (
+          <div className="mt-10 mx-3 rounded-2xl border border-dashed border-white/12 p-5 text-center animate-fade-in">
+            <div className="text-2xl mb-2 select-none">✦</div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              {displayBots.length === 0
+                ? 'ยังไม่มี bot — กดปุ่ม + เพื่อสร้าง assistant แรกของคุณ'
+                : 'ไม่พบ bot ที่ค้นหา'}
+            </p>
+            {displayBots.length === 0 && (
+              <button
+                onClick={onOpenNewBot}
+                className="btn-accent mt-3 rounded-lg px-3 py-1.5 text-[11px] font-medium"
+              >
+                New Bot
+              </button>
+            )}
+          </div>
+        ) : (
+          filteredBots.map((botItem) => {
+            const isActive = activeBotId === botItem.id || (activeBotId === '' && botItem.id === displayBots[0]?.id);
 
-          return (
-            <div
-              key={botItem.id}
-              onClick={() => onSelectBot(botItem.id)}
-              className={`group p-2.5 rounded-xl cursor-pointer transition-all duration-150 flex items-start gap-3 ${
-                isActive
-                  ? 'bg-[#27272a] text-white shadow-sm border border-[#34343a]'
-                  : 'hover:bg-[#1c1c20] text-zinc-400 border border-transparent'
-              }`}
-            >
-              <MascotAvatar type={botItem.avatarType} size="md" />
+            return (
+              <div
+                key={botItem.id}
+                onClick={() => onSelectBot(botItem.id)}
+                className={`group p-2.5 rounded-2xl cursor-pointer flex items-start gap-3 glass-row ${
+                  isActive ? 'glass-row-active text-white' : 'text-zinc-400'
+                }`}
+              >
+                <BotAvatar bot={botItem} />
 
-              <div className="flex-1 min-w-0 pt-0.5">
-                <div className="flex items-center justify-between">
-                  <h3 className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-200'}`}>
-                    {botItem.name}
-                  </h3>
-                  {botItem.time && (
-                    <span className="text-[10px] text-zinc-400 font-normal ml-1">
-                      {botItem.time}
-                    </span>
-                  )}
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-200'}`}>
+                      {botItem.name}
+                    </h3>
+                    {botItem.time && (
+                      <span className="text-[10px] text-zinc-500 font-normal ml-1">
+                        {botItem.time}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] truncate mt-0.5 text-zinc-400 group-hover:text-zinc-300">
+                    {botItem.subtitle}
+                  </p>
                 </div>
-
-                <p
-                  className={`text-[11px] truncate mt-0.5 ${
-                    botItem.isError
-                      ? 'text-zinc-400'
-                      : 'text-zinc-400 group-hover:text-zinc-300'
-                  }`}
-                >
-                  {botItem.subtitle}
-                </p>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Bottom Sidebar Footer */}
-      <div className="p-3 space-y-2 border-t border-[#1f1f23]">
+      <div className="p-3 space-y-2 border-t border-white/8">
         {/* Plugins Section */}
         <button
           suppressHydrationWarning={true}
           onClick={() => onSelectTab && onSelectTab('marketplace')}
-          className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition ${
-            activeTab === 'marketplace'
-              ? 'text-white bg-[#1e1e22]'
-              : 'text-zinc-300 hover:text-white hover:bg-[#1e1e22]'
+          className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition glass-row ${
+            activeTab === 'marketplace' ? 'glass-row-active text-white' : 'text-zinc-300 hover:text-white'
           }`}
         >
           <span className="text-sm">🧩</span>
@@ -178,62 +166,35 @@ export default function Sidebar({
         <button
           suppressHydrationWarning={true}
           onClick={() => onSelectTab && onSelectTab('audit')}
-          className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition ${
-            activeTab === 'audit'
-              ? 'text-white bg-[#1e1e22]'
-              : 'text-zinc-300 hover:text-white hover:bg-[#1e1e22]'
+          className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition glass-row ${
+            activeTab === 'audit' ? 'glass-row-active text-white' : 'text-zinc-300 hover:text-white'
           }`}
         >
           <FiActivity className="text-sm text-cyan-400" />
           <span>Audit trail</span>
         </button>
 
-        <button onClick={onLogout} className="w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs text-zinc-300 hover:text-white hover:bg-[#1e1e22]">
+        <button onClick={onLogout} className="w-full flex items-center gap-2 px-2 py-1 rounded-lg text-xs text-zinc-300 hover:text-white glass-row">
           <FiLogOut /> Sign out
         </button>
 
-        {/* Dynamic Issue Alert Badge vs You Profile Row */}
+        {/* You Profile Row */}
         <div className="flex items-center justify-between pt-1">
-          {errorCount > 0 && !isIssueDismissed ? (
-            <div className="flex items-center gap-2">
-              <div
-                className="bg-[#e11d48]/90 hover:bg-[#e11d48] text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm border border-rose-500/40 cursor-pointer transition"
-                title={`${errorCount} agent process spawn issue detected`}
-              >
-                <span className="w-2 h-2 rounded-full bg-white block animate-pulse" />
-                <span>{errorCount} Issue{errorCount > 1 ? 's' : ''}</span>
-                <button
-                  suppressHydrationWarning={true}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsIssueDismissed(true);
-                  }}
-                  className="text-white/80 hover:text-white ml-0.5 font-bold transition focus:outline-none"
-                  title="Dismiss issue notification"
-                >
-                  ✕
-                </button>
-
-              </div>
+          <button
+            suppressHydrationWarning={true}
+            onClick={onOpenSettings}
+            className="flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium text-zinc-300 hover:text-white transition"
+          >
+            <div className="w-5 h-5 rounded-full btn-accent flex items-center justify-center text-[10px] font-bold">
+              {displayName.charAt(0).toUpperCase()}
             </div>
-          ) : (
-            <button
-              suppressHydrationWarning={true}
-              onClick={onOpenSettings}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#1e1e22] transition"
-            >
-              <div className="w-5 h-5 rounded-full bg-[#2a2a2e] flex items-center justify-center text-[10px] text-zinc-400 font-bold border border-[#333338]">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-              <span>{displayName}</span>
-            </button>
-
-          )}
+            <span>{displayName}</span>
+          </button>
 
           <button
             suppressHydrationWarning={true}
             onClick={onOpenSettings}
-            className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-[#1e1e22] rounded-lg transition"
+            className="p-2 text-zinc-400 hover:text-zinc-200 glass-hover rounded-lg transition"
             title="Settings"
           >
             <FiSettings className="text-sm" />
@@ -243,4 +204,3 @@ export default function Sidebar({
     </aside>
   );
 }
-

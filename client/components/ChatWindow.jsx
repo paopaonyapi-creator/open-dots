@@ -226,13 +226,17 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#09090b] relative select-none font-sans text-zinc-100">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden relative select-none font-sans text-zinc-100">
       {/* Top Header Bar */}
-      <header className="px-6 py-3.5 flex items-center justify-between z-20 bg-[#09090b]/80 backdrop-blur-md border-b border-[#18181c]">
+      <header className="px-6 py-3.5 flex items-center justify-between z-20 border-b border-white/8"
+        style={{ background: 'rgba(10,10,12,0.45)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', backdropFilter: 'blur(28px) saturate(180%)' }}>
         {/* Left Side: Bot Indicator */}
         <div className="flex items-center gap-2.5">
           <MascotAvatar type={bot?.isError ? 'warning' : 'blue'} size="sm" />
-          <h2 className="font-bold text-sm text-zinc-100 tracking-wide">{botTitle}</h2>
+          <div>
+            <h2 className="font-bold text-sm text-zinc-100 tracking-wide leading-tight">{botTitle}</h2>
+            {bot?.role && <p className="text-[10px] text-zinc-500 leading-tight">{bot.role}</p>}
+          </div>
         </div>
 
 
@@ -247,7 +251,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
           <button
             suppressHydrationWarning={true}
             onClick={onToggleComputer}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1f1f23] transition"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white glass-hover transition"
             title="Toggle Desktop Screen Preview"
           >
             <FiMonitor className="text-base" />
@@ -301,10 +305,10 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
           {isStreaming && (
             <div className="flex justify-start items-center gap-3 my-3 animate-fade-in">
               <MascotAvatar type={bot?.isError ? 'warning' : 'blue'} size="sm" />
-              <div className="bg-[#18181b] border border-[#27272a] px-4 py-3 rounded-2xl flex items-center gap-1.5 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '-0.32s' }} />
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '-0.16s' }} />
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="dark-bubble-bot px-4 py-3 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[rgba(10,132,255,0.9)] animate-bounce" style={{ animationDelay: '-0.32s' }} />
+                <span className="w-2 h-2 rounded-full bg-[rgba(10,132,255,0.9)] animate-bounce" style={{ animationDelay: '-0.16s' }} />
+                <span className="w-2 h-2 rounded-full bg-[rgba(10,132,255,0.9)] animate-bounce" style={{ animationDelay: '0s' }} />
               </div>
             </div>
           )}
@@ -316,7 +320,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
 
 
       {/* Bottom Floating Pill Composer Input */}
-      <div className="p-6 flex flex-col items-center z-20 bg-gradient-to-t from-[#09090b] via-[#09090b]/90 to-transparent">
+      <div className="p-6 flex flex-col items-center z-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
         {/* Hidden Image File Input */}
         <input
           ref={fileInputRef}
@@ -328,12 +332,12 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
 
         {/* Selected Image Thumbnail Preview Chip */}
         {selectedImage && (
-          <div className="w-full max-w-2xl flex items-center justify-between bg-[#1c1c20] border border-[#2b2b32] px-3 py-1.5 rounded-xl mb-2 text-xs animate-fade-in shadow-md">
+          <div className="w-full max-w-2xl flex items-center justify-between liquid-glass px-3 py-1.5 rounded-2xl mb-2 text-xs animate-fade-in">
             <div className="flex items-center gap-2.5">
               <img
                 src={selectedImage.previewUrl}
                 alt="Selected Image Preview"
-                className="w-9 h-9 rounded-lg object-cover border border-zinc-700 shadow-sm"
+                className="w-9 h-9 rounded-lg object-cover border border-white/10 shadow-sm"
               />
               <div className="flex flex-col">
                 <span className="text-zinc-200 font-semibold text-[11px] truncate max-w-[180px]">
@@ -353,7 +357,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
               suppressHydrationWarning={true}
               type="button"
               onClick={() => setSelectedImage(null)}
-              className="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-[#2a2a30] transition"
+              className="text-zinc-400 hover:text-white p-1 rounded-md glass-hover transition"
               title="Remove image"
             >
               <FiX className="text-sm" />
@@ -363,7 +367,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
 
         <form
           onSubmit={handleSendMessage}
-          className="w-full max-w-2xl dark-pill-input px-4 py-2.5 flex items-center gap-3 bg-[#1c1c20] border border-[#2b2b32] shadow-2xl transition focus-within:border-zinc-500"
+          className="w-full max-w-2xl dark-pill-input px-4 py-2.5 flex items-center gap-3"
         >
           {/* Plus / Image Upload Action Button */}
           <button

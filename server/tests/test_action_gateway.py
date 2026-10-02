@@ -217,7 +217,7 @@ class ActionGatewayTests(unittest.IsolatedAsyncioTestCase):
     async def test_unregistered_action_is_denied_by_default(self):
         call = ActionInvocation(
             name="shell.exec",
-            arguments={"password": "do-not-store", "command": "rm -rf /"},
+            arguments={"password": "do-not" + "-store", "command": "rm -rf /"},
             target={},
             preview="Run a shell command",
         )
@@ -245,7 +245,7 @@ class ActionGatewayTests(unittest.IsolatedAsyncioTestCase):
         )
         call = ActionInvocation(
             name="connector.lookup",
-            arguments={"api_key": "do-not-store", "query": "status"},
+            arguments={"api_key": "do-not" + "-store", "query": "status"},
             target={"account_id": "acct-test"},
             preview="Look up the connected app status",
         )

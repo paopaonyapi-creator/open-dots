@@ -7,14 +7,14 @@ import ComputerPanel from './ComputerPanel';
 import Marketplace from './Marketplace';
 import AuditPanel from './AuditPanel';
 import AppSettingsDrawer from './AppSettingsDrawer';
+import NewBotModal from './NewBotModal';
 
-import { 
-  fetchBots, 
-  fetchModels, 
-  fetchChatHistory, 
+import {
+  fetchBots,
+  fetchModels,
+  fetchChatHistory,
   fetchSettings,
-  createBot, 
-  updateBot 
+  updateBot
 } from '../lib/api';
 
 export default function Dashboard({ onLogout }) {
@@ -24,6 +24,7 @@ export default function Dashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'computer' | 'marketplace' | 'audit'
   const [messages, setMessages] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNewBotOpen, setIsNewBotOpen] = useState(false);
   const [defaultModel, setDefaultModel] = useState('gpt-5-mini');
   const [userName, setUserName] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -71,31 +72,8 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  const handleCreateNewBot = async () => {
-    const name = prompt('Enter Bot Name:', 'New Assistant');
-    if (!name) return;
-    const role = prompt('Enter Role:', 'General Intelligence');
-    const model = prompt('Enter Model:', defaultModel);
-
-    try {
-      const newBot = await createBot({
-        name,
-        role: role || 'AI Assistant',
-        model: model || defaultModel,
-        description: `Custom assistant configured to use ${model || defaultModel}.`,
-        avatar: '🤖',
-        system_prompt: `You are ${name}, a helpful AI assistant.`
-      });
-      setBots((prev) => [...prev, newBot]);
-      setActiveBotId(newBot.id);
-      setActiveTab('chat');
-    } catch (err) {
-      console.error('Failed to create bot:', err);
-    }
-  };
-
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
       <Sidebar
         onLogout={onLogout}
@@ -109,7 +87,7 @@ export default function Dashboard({ onLogout }) {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(!isSettingsOpen)}
-        onOpenNewBot={handleCreateNewBot}
+        onOpenNewBot={() => setIsNewBotOpen(true)}
       />
 
       {/* Main Workspace Display Area */}
@@ -148,6 +126,18 @@ export default function Dashboard({ onLogout }) {
           setModels(await fetchModels());
         }}
         onProfileUpdate={(name) => setUserName(name || 'You')}
+      />
+
+      {/* New Bot Modal with Presets */}
+      <NewBotModal
+        isOpen={isNewBotOpen}
+        onClose={() => setIsNewBotOpen(false)}
+        defaultModel={defaultModel}
+        onCreated={(newBot) => {
+          setBots((prev) => [...prev, newBot]);
+          setActiveBotId(newBot.id);
+          setActiveTab('chat');
+        }}
       />
     </div>
   );

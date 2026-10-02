@@ -1,5 +1,11 @@
+import asyncio
+import re
+
+import httpx
 from fastapi import APIRouter
-from typing import List
+from typing import List, Optional
+
+from app.config import settings as app_config
 from app.schemas.contracts import ModelInfo
 from app.services.storage_service import storage_service
 
@@ -47,6 +53,47 @@ AVAILABLE_MODELS: List[ModelInfo] = [
     ModelInfo(id="kimi-k3", name="Kimi K3", provider="Moonshot", description="Long-context Chinese & English reasoning model")
 ]
 
+def _friendly_model_info(model_id: str, default_model: str, base_url: str) -> ModelInfo:
+    display = re.sub(r"[-_]+", " ", model_id).strip()
+    host = ""
+    try:
+        host = httpx.URL(base_url).host or ""
+    except Exception:
+        host = ""
+    provider = f"Provider ({host})" if host else "Configured provider"
+    return ModelInfo(
+        id=model_id,
+        name=display,
+        provider=provider,
+        description=f"Live model discovered at {base_url}/models",
+        recommended=model_id == default_model,
+    )
+
+
+async def _discover_provider_models(base_url: str, api_key: str) -> Optional[List[str]]:
+    """Ask the configured OpenAI-compatible endpoint for its live model list."""
+    if not base_url:
+        return None
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            response = await client.get(f"{base_url.rstrip('/')}/models", headers=headers)
+            if response.status_code != 200:
+                return None
+            payload = response.json()
+    except (httpx.HTTPError, ValueError):
+        return None
+    data = payload.get("data") if isinstance(payload, dict) else payload
+    if not isinstance(data, list):
+        return None
+    ids = sorted({
+        str(item.get("id")).strip()
+        for item in data
+        if isinstance(item, dict) and str(item.get("id", "")).strip()
+    })
+    return ids or None
+
+
 @router.get("", response_model=List[ModelInfo])
 async def list_models():
     configured = storage_service.get_settings()
@@ -57,4 +104,16 @@ async def list_models():
                       recommended=model_id == configured.get("default_model"))
             for model_id in configured["model_ids"]
         ]
+
+    base_url = (configured.get("model_api_base_url") or app_config.MODEL_API_BASE_URL or "")
+    api_key = (configured.get("model_api_key") or app_config.MODEL_API_KEY or "")
+    if base_url:
+        model_ids = await _discover_provider_models(base_url, api_key)
+        if model_ids:
+            default_model = configured.get("default_model") or ""
+            return [
+                _friendly_model_info(model_id, default_model, base_url)
+                for model_id in model_ids
+            ]
+
     return AVAILABLE_MODELS

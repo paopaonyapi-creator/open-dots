@@ -37,3 +37,14 @@ server/app/services/__pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# Security scanner state
+.mimosa/
+client/.mimosa/
+server/.mimosa/
+
+# Local one-off scratch files
+tmp-token.txt
+_bot*.json
+_thread*.txt
+_stream*.txt

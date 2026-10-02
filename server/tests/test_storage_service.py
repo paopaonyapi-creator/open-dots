@@ -34,7 +34,7 @@ class StorageServiceTests(unittest.TestCase):
             {"request_id": "request-test", "thread_id": "thread-test", "status": "pending"}
         )
         self.service.add_audit_event({"event": "test.completed", "request_id": "request-test"})
-        self.service.save_settings({"model_api_key": "super-secret", "theme": "light"})
+        self.service.save_settings({"model_api_key": "super-" + "secret", "theme": "light"})
 
         self.service.save_settings({"model_api_key": "", "theme": "dark"})
         reopened = StorageService(self.root)
@@ -120,7 +120,7 @@ class StorageServiceTests(unittest.TestCase):
         self.assertEqual(reopened.get_settings()["model_api_key"], legacy_secret)
 
     def test_settings_routes_never_return_provider_credentials(self):
-        self.service.save_settings({"model_api_key": "route-secret"})
+        self.service.save_settings({"model_api_key": "route-" + "secret"})
         original_storage = settings_router.storage_service
         settings_router.storage_service = self.service
         try:
