@@ -1,18 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiX, FiSettings } from 'react-icons/fi';
 import { updateBot } from '../lib/api';
 
 export default function BotSettingsModal({ bot, models, onClose, onSaved }) {
-  const [name, setName] = useState(bot?.name || '');
-  const [role, setRole] = useState(bot?.role || '');
-  const [description, setDescription] = useState(bot?.description || '');
-  const [systemPrompt, setSystemPrompt] = useState(bot?.system_prompt || '');
-  const [model, setModel] = useState(bot?.model || '');
-  const [avatar, setAvatar] = useState(bot?.avatar || '🤖');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('');
+  const [description, setDescription] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [model, setModel] = useState('');
+  const [avatar, setAvatar] = useState('🤖');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Re-sync the form whenever a different bot (or a fresh copy) arrives.
+  useEffect(() => {
+    setName(bot?.name || '');
+    setRole(bot?.role || '');
+    setDescription(bot?.description || '');
+    setSystemPrompt(bot?.system_prompt || '');
+    setModel(bot?.model || '');
+    setAvatar(bot?.avatar || '🤖');
+    setError('');
+  }, [bot]);
 
   if (!bot) return null;
 
