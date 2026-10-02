@@ -10,6 +10,7 @@ import AppSettingsDrawer from './AppSettingsDrawer';
 import NewBotModal from './NewBotModal';
 import MemoryModal from './MemoryModal';
 import SearchModal from './SearchModal';
+import BotSettingsModal from './BotSettingsModal';
 
 import {
   fetchBots,
@@ -36,6 +37,7 @@ export default function Dashboard({ onLogout }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewBotOpen, setIsNewBotOpen] = useState(false);
   const [memoryBot, setMemoryBot] = useState(null);
+  const [settingsBot, setSettingsBot] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const threadOverrideRef = useRef(null);
   const [defaultModel, setDefaultModel] = useState('gpt-5-mini');
@@ -151,6 +153,13 @@ export default function Dashboard({ onLogout }) {
     setBots((prev) => prev.map((b) => (b.id === botId ? updated : b)));
   };
 
+  const handleSaveBotSettings = (updated) => {
+    setBots((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+    if (models.length && !models.some((m) => m.id === updated.model)) {
+      fetchModels().then((fresh) => setModels(fresh)).catch(() => {});
+    }
+  };
+
   const handleCreateThread = async () => {
     if (!activeBotId) return;
     try {
@@ -207,6 +216,7 @@ export default function Dashboard({ onLogout }) {
         onRenameBot={handleRenameBot}
         onDeleteBot={handleDeleteBot}
         onOpenMemory={(bot) => setMemoryBot(bot)}
+        onOpenBotSettings={(bot) => setSettingsBot(bot)}
       />
 
       {/* Main Workspace Display Area */}
@@ -270,6 +280,14 @@ export default function Dashboard({ onLogout }) {
         bot={memoryBot}
         onClose={() => setMemoryBot(null)}
         onSave={handleSetMemory}
+      />
+
+      {/* Bot Settings Modal (persona / prompt / model) */}
+      <BotSettingsModal
+        bot={settingsBot}
+        models={models}
+        onClose={() => setSettingsBot(null)}
+        onSaved={handleSaveBotSettings}
       />
 
       {/* Global Chat Search (Ctrl+K) */}

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiX, FiCopy, FiCheck } from 'react-icons/fi';
+import { FiX, FiCopy, FiCheck, FiVolume2, FiVolumeX } from 'react-icons/fi';
 
 function formatMsgTime(createdAt) {
   if (!createdAt) return '';
@@ -16,6 +16,7 @@ export default function MessageItem({ message }) {
   const isError = message.isError || message.text?.toLowerCase().startsWith('error:');
   const formattedTime = formatMsgTime(message.created_at);
   const [copied, setCopied] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   const copyText = async () => {
     try {
@@ -25,6 +26,28 @@ export default function MessageItem({ message }) {
     } catch (err) {
       console.warn('Copy failed:', err);
     }
+  };
+
+  const toggleSpeak = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const plain = (message.text || '')
+      .replace(/```[\s\S]*?```/g, ' (โค้ด) ')
+      .replace(/[#*_`>\-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!plain) return;
+    const utterance = new SpeechSynthesisUtterance(plain.slice(0, 1200));
+    utterance.lang = 'th-TH';
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
   };
 
   if (isUser) {
@@ -102,6 +125,17 @@ export default function MessageItem({ message }) {
               {formattedTime}
             </span>
           )}
+          <button
+            type="button"
+            onClick={toggleSpeak}
+            title={speaking ? 'หยุดอ่าน' : 'อ่านออกเสียง'}
+            className={`flex items-center gap-1 text-[10px] font-medium rounded-lg px-2 py-1 transition-all glass-hover border border-transparent hover:border-white/10 ${
+              speaking ? 'text-[rgba(10,132,255,0.95)]' : 'text-zinc-500 hover:text-zinc-200'
+            }`}
+          >
+            {speaking ? <FiVolumeX className="text-xs" /> : <FiVolume2 className="text-xs" />}
+            {speaking ? 'หยุด' : 'ฟัง'}
+          </button>
           <button
             type="button"
             onClick={copyText}

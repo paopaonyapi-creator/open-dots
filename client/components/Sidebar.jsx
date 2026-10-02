@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { FiSearch, FiPlus, FiSettings, FiActivity, FiLogOut, FiMoreHorizontal, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import MascotAvatar from './MascotAvatar';
 
+const FiCogGlyph = () => <span className="text-xs">⚙️</span>;
+
 function BotAvatar({ bot }) {
   const emoji = (bot?.originalBot?.avatar || '').trim();
   if (emoji) {
@@ -32,7 +34,8 @@ export default function Sidebar({
   onOpenNewBot,
   onRenameBot,
   onDeleteBot,
-  onOpenMemory
+  onOpenMemory,
+  onOpenBotSettings
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [menuBotId, setMenuBotId] = useState(null);
@@ -266,6 +269,15 @@ export default function Sidebar({
                           {botItem.originalBot?.memory?.length > 0 && (
                             <span className="ml-auto text-[10px] text-[rgba(10,132,255,0.95)]">{botItem.originalBot.memory.length}</span>
                           )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            onOpenBotSettings && onOpenBotSettings(botItem.originalBot);
+                            setMenuBotId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-zinc-200 hover:bg-white/10 transition"
+                        >
+                          <FiCogGlyph /> ตั้งค่า bot
                         </button>
                         <button
                           onClick={() => {
