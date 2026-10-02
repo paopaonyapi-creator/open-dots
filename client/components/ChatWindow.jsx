@@ -5,7 +5,7 @@ import MessageItem from './MessageItem';
 import ApprovalCard from './ApprovalCard';
 import ModelPicker from './ModelPicker';
 import MascotAvatar from './MascotAvatar';
-import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload } from 'react-icons/fi';
+import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload, FiMessageSquare, FiChevronDown, FiCheck, FiTrash2 } from 'react-icons/fi';
 import {
   sendMessage,
   subscribeToChatStream,
@@ -36,7 +36,77 @@ function formatHeaderDate(msgs) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function ChatWindow({ bot, models, messages, setMessages, onUpdateBotModel, onToggleComputer, defaultModel }) {
+function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const active = (threads || []).find((t) => t.id === activeThreadId);
+  const title = active?.title || 'แชทหลัก';
+
+  return (
+    <div className="relative z-50" ref={ref} suppressHydrationWarning={true}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl liquid-glass glass-hover text-xs text-zinc-200 transition font-medium"
+        title="สลับบทสนทนา"
+      >
+        <FiMessageSquare className="text-[11px] text-[rgba(10,132,255,0.9)]" />
+        <span className="max-w-[140px] truncate">{title}</span>
+        <FiChevronDown className={`text-zinc-400 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-[300px] dark-popover rounded-2xl z-50 overflow-hidden animate-scale-in">
+          <button
+            onClick={() => { onCreateThread && onCreateThread(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium text-[rgba(10,132,255,0.95)] hover:bg-white/[0.05] transition border-b border-white/8"
+          >
+            <FiPlus /> แชทใหม่
+          </button>
+          <div className="max-h-[280px] overflow-y-auto p-1.5 space-y-0.5">
+            {(threads || []).length === 0 && (
+              <p className="text-[11px] text-zinc-500 text-center py-4">ยังไม่มีบทสนทนา</p>
+            )}
+            {(threads || []).map((t) => {
+              const isActive = t.id === activeThreadId;
+              const isMain = t.id === t.bot_id;
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => { onSelectThread && onSelectThread(t.id); setOpen(false); }}
+                  className={`group flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer glass-row ${isActive ? 'glass-row-active' : ''}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[11px] font-medium truncate ${isActive ? 'text-white' : 'text-zinc-300'}`}>{t.title || 'แชท'}</p>
+                    <p className="text-[9px] text-zinc-500">{t.updated_at ? new Date(t.updated_at).toLocaleString() : ''}</p>
+                  </div>
+                  {!isMain && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteThread && onDeleteThread(t.id); }}
+                      className="p-1 rounded-md text-zinc-500 hover:text-rose-300 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100"
+                      title="ลบเธรดนี้"
+                    >
+                      <FiTrash2 className="text-xs" />
+                    </button>
+                  )}
+                  {isActive && <FiCheck className="text-xs text-[rgba(10,132,255,0.95)] flex-shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ChatWindow({ bot, models, messages, setMessages, threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread, onUpdateBotModel, onToggleComputer, defaultModel }) {
   const [inputPrompt, setInputPrompt] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -183,14 +253,14 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
     setMessages((prev) => [...prev, userMsgObj]);
 
     try {
-      if (bot?.id) {
-        await sendMessage(bot.id, bot.id, userText, activeModel, finalImageUrl);
+      if (bot?.id && activeThreadId) {
+        await sendMessage(activeThreadId, bot.id, userText, activeModel, finalImageUrl);
         setIsStreaming(true);
         let streamingMsgId = null;
 
 
         subscribeToChatStream(
-          bot.id,
+          activeThreadId,
           activeModel,
           (event) => {
             if (event.type === 'turn.started') {
@@ -282,8 +352,16 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
         </div>
 
 
-        {/* Right Side: Export, New Chat, Model Picker & Computer Monitor Toggle */}
+        {/* Right Side: Threads, Export, New Chat, Model Picker & Computer Monitor Toggle */}
         <div className="flex items-center gap-3">
+          <ThreadsDropdown
+            threads={threads}
+            activeThreadId={activeThreadId}
+            onSelectThread={onSelectThread}
+            onCreateThread={onCreateThread}
+            onDeleteThread={onDeleteThread}
+          />
+
           <button
             suppressHydrationWarning={true}
             onClick={handleExportChat}

@@ -15,6 +15,9 @@ import {
   fetchModels,
   fetchChatHistory,
   fetchSettings,
+  fetchThreads,
+  createThread,
+  deleteThreadApi,
   updateBot,
   deleteBot,
   setBotMemory
@@ -24,6 +27,8 @@ export default function Dashboard({ onLogout }) {
   const [bots, setBots] = useState([]);
   const [models, setModels] = useState([]);
   const [activeBotId, setActiveBotId] = useState('');
+  const [activeThreadId, setActiveThreadId] = useState('');
+  const [threads, setThreads] = useState([]);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'computer' | 'marketplace' | 'audit'
   const [messages, setMessages] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -57,13 +62,25 @@ export default function Dashboard({ onLogout }) {
     initData();
   }, []);
 
-  // Fetch chat history whenever active bot changes
+  // Load the bot's conversation threads and select its main thread.
   useEffect(() => {
     if (!activeBotId) return;
-    fetchChatHistory(activeBotId)
+    let cancelled = false;
+    setActiveThreadId(activeBotId);
+    setMessages([]);
+    fetchThreads(activeBotId)
+      .then((list) => { if (!cancelled) setThreads(list); })
+      .catch((err) => console.error('Failed to load threads:', err));
+    return () => { cancelled = true; };
+  }, [activeBotId]);
+
+  // Fetch chat history for the active conversation thread.
+  useEffect(() => {
+    if (!activeThreadId) return;
+    fetchChatHistory(activeThreadId)
       .then((history) => setMessages(history))
       .catch((err) => console.error('Failed to load history:', err));
-  }, [activeBotId]);
+  }, [activeThreadId]);
 
   const activeBot = bots.find((b) => b.id === activeBotId) || bots[0];
 
@@ -106,6 +123,33 @@ export default function Dashboard({ onLogout }) {
     setBots((prev) => prev.map((b) => (b.id === botId ? updated : b)));
   };
 
+  const handleCreateThread = async () => {
+    if (!activeBotId) return;
+    try {
+      const thread = await createThread(activeBotId);
+      setThreads((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
+      setActiveThreadId(thread.id);
+      setMessages([]);
+    } catch (err) {
+      console.error('Failed to create thread:', err);
+    }
+  };
+
+  const handleDeleteThread = async (threadId) => {
+    if (!activeBotId) return;
+    try {
+      await deleteThreadApi(activeBotId, threadId);
+      const remaining = threads.filter((t) => t.id !== threadId);
+      setThreads(remaining);
+      if (activeThreadId === threadId) {
+        setActiveThreadId(activeBotId);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to delete thread:', err);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
@@ -135,6 +179,11 @@ export default function Dashboard({ onLogout }) {
             models={models}
             messages={messages}
             setMessages={setMessages}
+            threads={threads}
+            activeThreadId={activeThreadId}
+            onSelectThread={(id) => setActiveThreadId(id)}
+            onCreateThread={handleCreateThread}
+            onDeleteThread={handleDeleteThread}
             onUpdateBotModel={handleUpdateBotModel}
             onToggleComputer={() => setActiveTab('computer')}
             defaultModel={defaultModel}

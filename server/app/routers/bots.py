@@ -80,6 +80,48 @@ async def create_bot(bot_data: Dict[str, Any]):
     storage_service.save_bots(bots)
     return bot
 
+@router.get("/{bot_id}/threads")
+async def list_threads(bot_id: str):
+    bots = storage_service.get_bots()
+    if not any(b["id"] == bot_id for b in bots):
+        raise HTTPException(status_code=404, detail="Bot not found")
+    storage_service.ensure_thread(bot_id)
+    return storage_service.get_threads(bot_id)
+
+
+@router.post("/{bot_id}/threads")
+async def create_thread(bot_id: str, payload: Dict[str, Any]):
+    bots = storage_service.get_bots()
+    if not any(b["id"] == bot_id for b in bots):
+        raise HTTPException(status_code=404, detail="Bot not found")
+    title = str(payload.get("title") or "").strip() or "แชทใหม่"
+    thread = storage_service.upsert_thread({"id": f"thread-{uuid.uuid4().hex}", "bot_id": bot_id, "title": title})
+    return thread
+
+
+@router.put("/{bot_id}/threads/{thread_id}")
+async def rename_thread(bot_id: str, thread_id: str, payload: Dict[str, Any]):
+    thread = storage_service.get_thread(thread_id)
+    if not thread or thread.get("bot_id") != bot_id:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    title = str(payload.get("title") or "").strip()
+    if not title:
+        raise HTTPException(status_code=422, detail="Title must not be empty.")
+    thread["title"] = title[:120]
+    return storage_service.upsert_thread(thread)
+
+
+@router.delete("/{bot_id}/threads/{thread_id}")
+async def delete_thread(bot_id: str, thread_id: str):
+    if thread_id == bot_id:
+        raise HTTPException(status_code=400, detail="The bot's main thread cannot be deleted.")
+    removed = storage_service.delete_thread(bot_id, thread_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    storage_service.clear_messages(thread_id)
+    return {"status": "ok", "deleted_id": thread_id}
+
+
 @router.put("/{bot_id}", response_model=Bot)
 async def update_bot(bot_id: str, updates: Dict[str, Any]):
     allowed = {"name", "role", "description", "avatar", "model", "accent_color", "system_prompt", "tools", "pinned", "unread_count", "memory"}

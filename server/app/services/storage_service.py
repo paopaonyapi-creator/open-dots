@@ -43,6 +43,7 @@ class StorageService:
         # recovery copies. Normal reads and writes use SQLite below.
         self.bots_file = self.data_dir / "bots.json"
         self.messages_file = self.data_dir / "messages.json"
+        self.threads_file = self.data_dir / "threads.json"
         self.settings_file = self.data_dir / "settings.json"
         self.approvals_file = self.data_dir / "approvals.json"
         self.audit_file = self.data_dir / "audit.json"
@@ -310,6 +311,56 @@ class StorageService:
                 (self.owner_id, thread_id),
             )
             return cursor.rowcount
+
+    # ── Conversation threads (multi-chat per bot) ───────────────────────────
+    # Registry lives in threads.json; the bot's main thread reuses the bot id
+    # so every existing conversation keeps working without migration.
+
+    def get_threads(self, bot_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        threads = self._read_json(self.threads_file, [])
+        if bot_id:
+            threads = [t for t in threads if t.get("bot_id") == bot_id]
+        return sorted(threads, key=lambda t: t.get("updated_at") or t.get("created_at") or "", reverse=True)
+
+    def get_thread(self, thread_id: str) -> Optional[Dict[str, Any]]:
+        threads = self._read_json(self.threads_file, [])
+        return next((t for t in threads if t.get("id") == thread_id), None)
+
+    def upsert_thread(self, thread: Dict[str, Any]) -> Dict[str, Any]:
+        threads = self._read_json(self.threads_file, [])
+        thread_id = str(thread.get("id") or f"thread-{uuid.uuid4().hex}")
+        now = _now()
+        merged = {**thread, "id": thread_id, "updated_at": now}
+        for i, t in enumerate(threads):
+            if t.get("id") == thread_id:
+                merged = {**t, **merged, "id": thread_id, "created_at": t.get("created_at") or now}
+                threads[i] = merged
+                break
+        else:
+            merged.setdefault("created_at", now)
+            threads.insert(0, merged)
+        self._write_json(self.threads_file, threads)
+        return merged
+
+    def delete_thread(self, bot_id: str, thread_id: str) -> bool:
+        threads = self._read_json(self.threads_file, [])
+        remaining = [t for t in threads if not (t.get("id") == thread_id and t.get("bot_id") == bot_id)]
+        if len(remaining) == len(threads):
+            return False
+        self._write_json(self.threads_file, remaining)
+        return True
+
+    def ensure_thread(self, bot_id: str, thread_id: Optional[str] = None, title: Optional[str] = None) -> Dict[str, Any]:
+        """Return the thread record, auto-provisioning the bot's main thread."""
+        target_id = thread_id or bot_id
+        existing = self.get_thread(target_id)
+        if existing and existing.get("bot_id") == bot_id:
+            return existing
+        return self.upsert_thread({
+            "id": target_id,
+            "bot_id": bot_id,
+            "title": title or ("แชทหลัก" if target_id == bot_id else "แชทใหม่"),
+        })
 
     def save_messages(self, messages: List[Dict[str, Any]]):
         with self.database.connect() as connection:

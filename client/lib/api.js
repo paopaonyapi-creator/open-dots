@@ -151,6 +151,38 @@ export async function setBotMemory(botId, memory) {
   return res.json();
 }
 
+export async function fetchThreads(botId) {
+  const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/threads`);
+  if (!res.ok) throw new Error('Failed to load threads');
+  return res.json();
+}
+
+export async function createThread(botId, title) {
+  const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/threads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error('Failed to create thread');
+  return res.json();
+}
+
+export async function renameThread(botId, threadId, title) {
+  const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/threads/${threadId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error('Failed to rename thread');
+  return res.json();
+}
+
+export async function deleteThreadApi(botId, threadId) {
+  const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/threads/${threadId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete thread');
+  return res.json();
+}
+
 export async function sendMessage(threadId, botId, text, model = 'gpt-5-mini', imageUrl = null) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/chat/send`, {

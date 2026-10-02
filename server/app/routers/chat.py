@@ -51,6 +51,18 @@ async def send_message(req: TurnRequest):
     }
 
     storage_service.add_message(user_msg)
+
+    # Thread registry: create the thread on first message and auto-title it.
+    thread = storage_service.get_thread(req.thread_id)
+    if thread is None:
+        title = req.user_text.strip()[:60] or "แชทใหม่"
+        storage_service.upsert_thread({"id": req.thread_id, "bot_id": req.bot_id, "title": title})
+    else:
+        thread["bot_id"] = req.bot_id
+        if not str(thread.get("title") or "").strip() or thread.get("title") == "แชทใหม่":
+            thread["title"] = req.user_text.strip()[:60] or thread.get("title")
+        storage_service.upsert_thread(thread)
+
     return {"status": "ok", "message": user_msg}
 
 @router.get("/stream/{thread_id}")
@@ -59,8 +71,12 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
     SSE stream endpoint broadcasting real-time tokens & tool events for a given thread.
     """
     history = storage_service.get_messages(thread_id=thread_id)
+    # Resolve the bot through the thread registry (legacy main threads use the bot id).
+    thread_record = storage_service.get_thread(thread_id)
+    thread_bot_id = (thread_record.get("bot_id") if thread_record else None) or thread_id
+    storage_service.ensure_thread(thread_bot_id, thread_id)
     bots = storage_service.get_bots()
-    current_bot = next((b for b in bots if b["id"] == thread_id), None)
+    current_bot = next((b for b in bots if b["id"] == thread_bot_id), None)
     
     raw_prompt = current_bot["system_prompt"] if current_bot else "You are a helpful AI assistant."
     current_time_str = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
