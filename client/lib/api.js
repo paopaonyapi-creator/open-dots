@@ -135,6 +135,12 @@ export async function fetchChatHistory(threadId) {
   }
 }
 
+export async function clearChatHistory(threadId) {
+  const res = await apiFetch(`${API_BASE_URL}/chat/history/${threadId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to clear chat history');
+  return res.json();
+}
+
 export async function sendMessage(threadId, botId, text, model = 'gpt-5-mini', imageUrl = null) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/chat/send`, {

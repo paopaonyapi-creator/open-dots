@@ -5,12 +5,13 @@ import MessageItem from './MessageItem';
 import ApprovalCard from './ApprovalCard';
 import ModelPicker from './ModelPicker';
 import MascotAvatar from './MascotAvatar';
-import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage } from 'react-icons/fi';
+import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw } from 'react-icons/fi';
 import {
   sendMessage,
   subscribeToChatStream,
   uploadImage,
   respondApproval,
+  clearChatHistory,
 } from '../lib/api';
 
 function formatHeaderDate(msgs) {
@@ -43,8 +44,10 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
   const [selectedImage, setSelectedImage] = useState(null);
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [toolEvents, setToolEvents] = useState([]);
+  const [confirmClear, setConfirmClear] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const clearTimerRef = useRef(null);
 
   const botTitle = bot?.name || 'Open Dots Assistant';
 
@@ -86,6 +89,25 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
   const handleApprovalResponse = async (requestId, action) => {
     await respondApproval(requestId, action);
   };
+
+  const handleNewChat = async () => {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = setTimeout(() => setConfirmClear(false), 3000);
+      return;
+    }
+    clearTimeout(clearTimerRef.current);
+    setConfirmClear(false);
+    try {
+      if (bot?.id) await clearChatHistory(bot.id);
+    } catch (err) {
+      console.error('Failed to clear chat history:', err);
+    }
+    setMessages([]);
+  };
+
+  React.useEffect(() => () => clearTimeout(clearTimerRef.current), []);
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -240,8 +262,21 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
         </div>
 
 
-        {/* Right Side: Model Picker & Computer Monitor Toggle */}
+        {/* Right Side: New Chat, Model Picker & Computer Monitor Toggle */}
         <div className="flex items-center gap-3">
+          <button
+            suppressHydrationWarning={true}
+            onClick={handleNewChat}
+            className={`p-1.5 rounded-lg transition ${
+              confirmClear
+                ? 'text-rose-300 bg-rose-500/15'
+                : 'text-zinc-400 hover:text-white glass-hover'
+            }`}
+            title={confirmClear ? 'คลิกอีกครั้งเพื่อยืนยันล้างแชท' : 'New chat (ล้างบทสนทนานี้)'}
+          >
+            <FiRotateCcw className="text-base" />
+          </button>
+
           <ModelPicker
             models={models}
             currentModel={activeModel}

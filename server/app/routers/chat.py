@@ -27,6 +27,11 @@ router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 async def get_history(thread_id: str):
     return storage_service.get_messages(thread_id=thread_id)
 
+@router.delete("/history/{thread_id}")
+async def clear_history(thread_id: str):
+    removed = storage_service.clear_messages(thread_id)
+    return {"status": "ok", "removed": removed}
+
 @router.post("/send")
 async def send_message(req: TurnRequest):
     # Store user message
