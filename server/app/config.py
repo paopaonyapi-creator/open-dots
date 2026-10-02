@@ -1,6 +1,11 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Load .env here so every entrypoint (run.py, uvicorn direct, tests) sees it.
+load_dotenv()
+
 class Settings:
     MODEL_API_KEY: str = os.getenv("MODEL_API_KEY", "")
     MODEL_API_BASE_URL: str = os.getenv("MODEL_API_BASE_URL", "").rstrip("/")
