@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import ComputerPanel from './ComputerPanel';
@@ -36,6 +36,7 @@ export default function Dashboard({ onLogout }) {
   const [isNewBotOpen, setIsNewBotOpen] = useState(false);
   const [memoryBot, setMemoryBot] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const threadOverrideRef = useRef(null);
   const [defaultModel, setDefaultModel] = useState('gpt-5-mini');
   const [userName, setUserName] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -65,10 +66,13 @@ export default function Dashboard({ onLogout }) {
   }, []);
 
   // Load the bot's conversation threads and select its main thread.
+  // A search-result jump overrides the default main-thread selection.
   useEffect(() => {
     if (!activeBotId) return;
     let cancelled = false;
-    setActiveThreadId(activeBotId);
+    const targetThread = threadOverrideRef.current || activeBotId;
+    threadOverrideRef.current = null;
+    setActiveThreadId(targetThread);
     setMessages([]);
     fetchThreads(activeBotId)
       .then((list) => { if (!cancelled) setThreads(list); })
@@ -100,6 +104,7 @@ export default function Dashboard({ onLogout }) {
 
   const handleSearchSelect = (hit) => {
     if (hit.bot_id) {
+      threadOverrideRef.current = hit.thread_id;
       setActiveBotId(hit.bot_id);
       setActiveTab('chat');
     }

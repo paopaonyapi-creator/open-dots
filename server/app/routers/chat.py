@@ -27,6 +27,11 @@ router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 async def get_history(thread_id: str):
     return storage_service.get_messages(thread_id=thread_id)
 
+@router.get("/search")
+async def search_all(q: str = Query("")):
+    matches = storage_service.search_messages(q, limit=50)
+    return {"query": q, "count": len(matches), "results": matches}
+
 @router.delete("/history/{thread_id}")
 async def clear_history(thread_id: str):
     removed = storage_service.clear_messages(thread_id)

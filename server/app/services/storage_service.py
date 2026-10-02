@@ -313,6 +313,33 @@ class StorageService:
             return cursor.rowcount
 
     def search_messages(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Case-insensitive text search across every conversation, newest first.
+
+        Filtering happens in Python because payloads are stored as JSON with
+        non-ASCII escapes, which SQL LIKE cannot match for Thai text.
+        """
+        needle = query.strip().lower()
+        if not needle:
+            return []
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                "SELECT payload FROM messages WHERE owner_id = ? ORDER BY rowid DESC LIMIT 2000",
+                (self.owner_id,),
+            ).fetchall()
+        matches = []
+        for row in rows:
+            payload = self._decode_payload(row[0])
+            if not isinstance(payload, dict):
+                continue
+            text = str(payload.get("text") or "")
+            if needle in text.lower():
+                payload["snippet"] = text[:240]
+                matches.append(payload)
+                if len(matches) >= limit:
+                    break
+        return matches
+
+    def search_messages(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Case-insensitive text search across every conversation, newest first."""
         needle = query.strip().lower()
         if not needle:
