@@ -5,7 +5,7 @@ import MessageItem from './MessageItem';
 import ApprovalCard from './ApprovalCard';
 import ModelPicker from './ModelPicker';
 import MascotAvatar from './MascotAvatar';
-import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw } from 'react-icons/fi';
+import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload } from 'react-icons/fi';
 import {
   sendMessage,
   subscribeToChatStream,
@@ -108,6 +108,26 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
   };
 
   React.useEffect(() => () => clearTimeout(clearTimerRef.current), []);
+
+  const handleExportChat = () => {
+    const realMessages = (messages || []).filter((m) => (m.text || '').trim());
+    if (!realMessages.length) return;
+    const lines = [`# ${botTitle} — chat export`, '', `_Exported ${new Date().toLocaleString()}_`, ''];
+    for (const m of realMessages) {
+      const who = m.sender === 'user' ? '🧑 You' : `🤖 ${botTitle}`;
+      const time = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+      lines.push(`## ${who}${time ? ` — ${time}` : ''}`, '', m.text || '', '', '---', '');
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dotsbypao-${(botTitle || 'chat').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -262,8 +282,18 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
         </div>
 
 
-        {/* Right Side: New Chat, Model Picker & Computer Monitor Toggle */}
+        {/* Right Side: Export, New Chat, Model Picker & Computer Monitor Toggle */}
         <div className="flex items-center gap-3">
+          <button
+            suppressHydrationWarning={true}
+            onClick={handleExportChat}
+            disabled={!messages || messages.length === 0}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white glass-hover transition disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Export chat as Markdown (.md)"
+          >
+            <FiDownload className="text-base" />
+          </button>
+
           <button
             suppressHydrationWarning={true}
             onClick={handleNewChat}
