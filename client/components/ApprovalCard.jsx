@@ -24,7 +24,7 @@ export default function ApprovalCard({ approval, onRespond }) {
   };
 
   return (
-    <div className="my-3 p-4 rounded-2xl glass-panel border border-amber-500/30 bg-slate-900/80 shadow-xl max-w-xl">
+    <div className="my-3 p-4 rounded-2xl liquid-glass border border-amber-500/30 max-w-xl">
       <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-3">
         <div className="flex items-center gap-2 text-amber-400">
           <FiShield className="text-lg animate-pulse" />

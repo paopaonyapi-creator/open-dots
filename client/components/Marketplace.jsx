@@ -202,8 +202,9 @@ export default function Marketplace({ onOpenSettings }) {
   });
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#09090b] select-none font-sans text-zinc-100">
-      <div className="px-6 py-4 border-b border-[#18181c] flex items-center justify-between gap-4 flex-shrink-0">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden select-none font-sans text-zinc-100">
+      <div className="px-6 py-4 border-b border-white/8 flex items-center justify-between gap-4 flex-shrink-0"
+        style={{ background: 'rgba(10,10,12,0.45)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', backdropFilter: 'blur(28px) saturate(180%)' }}>
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-zinc-100 tracking-wide">Connected Apps</h2>
@@ -221,7 +222,7 @@ export default function Marketplace({ onOpenSettings }) {
           <button
             type="button"
             onClick={() => setRefreshToken((value) => value + 1)}
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1e1e22] transition"
+            className="p-2 rounded-lg text-zinc-400 hover:text-white glass-hover transition"
             title="Refresh connector status"
           >
             <FiRefreshCw className={loading ? 'animate-spin' : ''} />
@@ -233,7 +234,7 @@ export default function Marketplace({ onOpenSettings }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search apps…"
-              className="w-full bg-[#18181b] border border-[#27272a] rounded-xl pl-8 pr-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition"
+              className="w-full bg-black/25 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 transition focus:outline-none focus:border-[rgba(10,132,255,0.55)]"
             />
           </div>
         </div>
@@ -271,7 +272,7 @@ export default function Marketplace({ onOpenSettings }) {
       )}
 
       <div
-        className="flex-1 overflow-y-auto mx-6 mt-3 mb-6 rounded-2xl border border-[#1e1e22]"
+        className="flex-1 overflow-y-auto mx-6 mt-3 mb-6 liquid-glass rounded-2xl border-0"
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#27272a transparent' }}
       >
         {loading && apps.length === 0 ? (
@@ -285,9 +286,9 @@ export default function Marketplace({ onOpenSettings }) {
             return (
               <div
                 key={app.slug}
-                className={`flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-[#111115] ${
-                  index > 0 ? 'border-t border-[#1a1a1e]' : ''
-                } ${isOn ? 'bg-[#0d1210]' : 'bg-[#09090b]'}`}
+                className={`flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-white/[0.04] ${
+                  index > 0 ? 'border-t border-white/5' : ''
+                } ${isOn ? 'bg-emerald-500/[0.05]' : 'bg-transparent'}`}
               >
                 <AppIcon app={app} />
 
@@ -307,7 +308,7 @@ export default function Marketplace({ onOpenSettings }) {
                   className={`w-28 flex-shrink-0 py-1.5 rounded-xl text-[11px] font-semibold transition flex items-center justify-center gap-1.5 disabled:opacity-50 ${
                     isOn
                       ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/40 hover:bg-rose-500/15 hover:text-rose-400 hover:border-rose-500/30'
-                      : 'bg-[#1e1e22] text-zinc-400 border border-[#2a2a30] hover:text-white hover:bg-[#27272a]'
+                      : 'bg-white/[0.05] text-zinc-400 border border-white/10 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   {isBusy ? (

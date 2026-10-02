@@ -105,10 +105,10 @@ export default async function AlternativePage({ params }) {
   if (!comparison) notFound();
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100">
+    <main className="min-h-screen text-zinc-100">
       <header className="mx-auto flex max-w-4xl items-center justify-between px-6 py-6">
-        <Link href="/" className="font-semibold">Open Dots</Link>
-        <Link href="/app" className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950">Open the app</Link>
+        <Link href="/" className="font-semibold">Dots <span className="text-[rgba(10,132,255,0.9)]">by Pao</span></Link>
+        <Link href="/app" className="btn-accent rounded-lg px-4 py-2 text-sm font-medium">Open the app</Link>
       </header>
       <article className="mx-auto max-w-4xl px-6 pb-20 pt-12">
         <nav className="mb-8 text-sm text-zinc-500"><Link href="/">Home</Link> / Alternatives / {comparison.name}</nav>
