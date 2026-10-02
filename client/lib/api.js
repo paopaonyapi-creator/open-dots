@@ -141,6 +141,12 @@ export async function clearChatHistory(threadId) {
   return res.json();
 }
 
+export async function searchMessages(query) {
+  const res = await apiFetch(`${API_BASE_URL}/chat/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
 export async function setBotMemory(botId, memory) {
   const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/memory`, {
     method: 'PUT',

@@ -9,6 +9,7 @@ import AuditPanel from './AuditPanel';
 import AppSettingsDrawer from './AppSettingsDrawer';
 import NewBotModal from './NewBotModal';
 import MemoryModal from './MemoryModal';
+import SearchModal from './SearchModal';
 
 import {
   fetchBots,
@@ -34,6 +35,7 @@ export default function Dashboard({ onLogout }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewBotOpen, setIsNewBotOpen] = useState(false);
   const [memoryBot, setMemoryBot] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [defaultModel, setDefaultModel] = useState('gpt-5-mini');
   const [userName, setUserName] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -83,6 +85,26 @@ export default function Dashboard({ onLogout }) {
   }, [activeThreadId]);
 
   const activeBot = bots.find((b) => b.id === activeBotId) || bots[0];
+
+  // Ctrl+K opens global chat search from anywhere.
+  useEffect(() => {
+    const onKey = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const handleSearchSelect = (hit) => {
+    if (hit.bot_id) {
+      setActiveBotId(hit.bot_id);
+      setActiveTab('chat');
+    }
+    if (hit.thread_id) setActiveThreadId(hit.thread_id);
+  };
 
   const handleUpdateBotModel = async (botId, newModel) => {
     try {
@@ -231,6 +253,13 @@ export default function Dashboard({ onLogout }) {
         bot={memoryBot}
         onClose={() => setMemoryBot(null)}
         onSave={handleSetMemory}
+      />
+
+      {/* Global Chat Search (Ctrl+K) */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectResult={handleSearchSelect}
       />
     </div>
   );

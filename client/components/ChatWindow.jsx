@@ -5,7 +5,7 @@ import MessageItem from './MessageItem';
 import ApprovalCard from './ApprovalCard';
 import ModelPicker from './ModelPicker';
 import MascotAvatar from './MascotAvatar';
-import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload, FiMessageSquare, FiChevronDown, FiCheck, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload, FiMessageSquare, FiChevronDown, FiCheck, FiTrash2, FiSquare } from 'react-icons/fi';
 import {
   sendMessage,
   subscribeToChatStream,
@@ -118,6 +118,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const clearTimerRef = useRef(null);
+  const streamStopRef = useRef(null);
 
   const botTitle = bot?.name || 'Open Dots Assistant';
 
@@ -178,6 +179,14 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
   };
 
   React.useEffect(() => () => clearTimeout(clearTimerRef.current), []);
+
+  const handleStopStreaming = () => {
+    if (streamStopRef.current) {
+      streamStopRef.current();
+      streamStopRef.current = null;
+    }
+    setIsStreaming(false);
+  };
 
   const handleExportChat = () => {
     const realMessages = (messages || []).filter((m) => (m.text || '').trim());
@@ -259,7 +268,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
         let streamingMsgId = null;
 
 
-        subscribeToChatStream(
+        streamStopRef.current = subscribeToChatStream(
           activeThreadId,
           activeModel,
           (event) => {
@@ -371,6 +380,17 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
           >
             <FiDownload className="text-base" />
           </button>
+
+          {isStreaming && (
+            <button
+              suppressHydrationWarning={true}
+              onClick={handleStopStreaming}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-rose-300 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 transition"
+              title="หยุดการตอบ"
+            >
+              <FiSquare className="text-[10px]" /> หยุด
+            </button>
+          )}
 
           <button
             suppressHydrationWarning={true}

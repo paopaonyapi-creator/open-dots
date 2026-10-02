@@ -32,6 +32,11 @@ async def clear_history(thread_id: str):
     removed = storage_service.clear_messages(thread_id)
     return {"status": "ok", "removed": removed}
 
+@router.get("/search")
+async def search_all(q: str = Query("")):
+    matches = storage_service.search_messages(q, limit=50)
+    return {"query": q, "count": len(matches), "results": matches}
+
 @router.post("/send")
 async def send_message(req: TurnRequest):
     # Store user message
