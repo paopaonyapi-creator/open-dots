@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FiSearch, FiPlus, FiSettings, FiActivity, FiLogOut } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiSettings, FiActivity, FiLogOut, FiMoreHorizontal, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import MascotAvatar from './MascotAvatar';
 
 function BotAvatar({ bot }) {
@@ -29,11 +29,22 @@ export default function Sidebar({
   activeTab,
   onSelectTab,
   onOpenSettings,
-  onOpenNewBot
+  onOpenNewBot,
+  onRenameBot,
+  onDeleteBot
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [menuBotId, setMenuBotId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   // userName comes from Dashboard (synced with AppSettingsDrawer in real-time)
   const displayName = userName || 'You';
+
+  const closeMenus = () => {
+    setMenuBotId(null);
+    setConfirmDeleteId(null);
+  };
 
   const displayBots = (bots || []).map((b) => ({
     id: b.id,
@@ -51,8 +62,24 @@ export default function Sidebar({
       b.subtitle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const submitRename = (botId) => {
+    const value = renameValue;
+    setRenamingId(null);
+    setRenameValue('');
+    if (onRenameBot) onRenameBot(botId, value);
+  };
+
   return (
-    <aside className="w-72 h-screen dark-sidebar flex flex-col justify-between select-none flex-shrink-0 text-zinc-300 font-sans">
+    <aside className="w-72 h-screen dark-sidebar flex flex-col justify-between select-none flex-shrink-0 text-zinc-300 font-sans relative">
+      {/* Click-away backdrop for the per-bot menu */}
+      {menuBotId && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={closeMenus}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Top Header & Search Area */}
       <div className="p-3.5 space-y-3">
         {/* Traffic Light Dots & Plus Button Header */}
@@ -116,33 +143,122 @@ export default function Sidebar({
         ) : (
           filteredBots.map((botItem) => {
             const isActive = activeBotId === botItem.id || (activeBotId === '' && botItem.id === displayBots[0]?.id);
+            const isRenaming = renamingId === botItem.id;
+            const isConfirmingDelete = confirmDeleteId === botItem.id;
 
             return (
               <div
                 key={botItem.id}
-                onClick={() => onSelectBot(botItem.id)}
-                className={`group p-2.5 rounded-2xl cursor-pointer flex items-start gap-3 glass-row ${
+                onClick={() => !isConfirmingDelete && onSelectBot(botItem.id)}
+                className={`group relative p-2.5 rounded-2xl cursor-pointer flex items-start gap-3 glass-row ${
                   isActive ? 'glass-row-active text-white' : 'text-zinc-400'
                 }`}
               >
-                <BotAvatar bot={botItem} />
-
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="flex items-center justify-between">
-                    <h3 className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-200'}`}>
-                      {botItem.name}
-                    </h3>
-                    {botItem.time && (
-                      <span className="text-[10px] text-zinc-500 font-normal ml-1">
-                        {botItem.time}
-                      </span>
-                    )}
+                {isConfirmingDelete ? (
+                  /* Two-step delete confirmation, inline in the row */
+                  <div className="flex-1 min-w-0 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                    <p className="text-[11px] text-zinc-100 font-medium truncate">
+                      ลบ “{botItem.name}” ?
+                    </p>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">ประวัติแชทของ bot นี้จะไม่ถูกลบ</p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <button
+                        onClick={() => { onDeleteBot && onDeleteBot(botItem.id); closeMenus(); }}
+                        className="rounded-md bg-rose-600/90 hover:bg-rose-600 px-2.5 py-1 text-[10px] font-semibold text-white transition"
+                      >
+                        ลบเลย
+                      </button>
+                      <button
+                        onClick={closeMenus}
+                        className="rounded-md px-2.5 py-1 text-[10px] text-zinc-300 hover:bg-white/10 transition"
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <BotAvatar bot={botItem} />
 
-                  <p className="text-[11px] truncate mt-0.5 text-zinc-400 group-hover:text-zinc-300">
-                    {botItem.subtitle}
-                  </p>
-                </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-center justify-between gap-1">
+                        {isRenaming ? (
+                          <input
+                            autoFocus
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') submitRename(botItem.id);
+                              if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); }
+                            }}
+                            onBlur={() => submitRename(botItem.id)}
+                            maxLength={80}
+                            className="w-full bg-black/30 border border-[rgba(10,132,255,0.55)] rounded-md px-1.5 py-0.5 text-xs text-zinc-100 focus:outline-none"
+                          />
+                        ) : (
+                          <h3 className={`text-xs font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-200'}`}>
+                            {botItem.name}
+                          </h3>
+                        )}
+                        {!isRenaming && botItem.time && (
+                          <span className="text-[10px] text-zinc-500 font-normal flex-shrink-0">
+                            {botItem.time}
+                          </span>
+                        )}
+                      </div>
+
+                      {!isRenaming && (
+                        <p className="text-[11px] truncate mt-0.5 text-zinc-400 group-hover:text-zinc-300">
+                          {botItem.subtitle}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Per-bot options menu */}
+                    <button
+                      suppressHydrationWarning={true}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuBotId(menuBotId === botItem.id ? null : botItem.id);
+                        setConfirmDeleteId(null);
+                      }}
+                      title="Bot options"
+                      className={`absolute top-1 right-1 p-1 rounded-md text-zinc-500 hover:text-white hover:bg-white/10 transition ${
+                        menuBotId === botItem.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                    >
+                      <FiMoreHorizontal className="text-sm" />
+                    </button>
+
+                    {menuBotId === botItem.id && (
+                      <div
+                        className="absolute right-1 top-7 z-50 w-36 dark-popover rounded-xl p-1 animate-scale-in"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => {
+                            setRenamingId(botItem.id);
+                            setRenameValue(botItem.originalBot.name || '');
+                            setMenuBotId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-zinc-200 hover:bg-white/10 transition"
+                        >
+                          <FiEdit2 className="text-xs" /> เปลี่ยนชื่อ
+                        </button>
+                        <button
+                          onClick={() => {
+                            setConfirmDeleteId(botItem.id);
+                            setMenuBotId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-rose-300 hover:bg-rose-500/15 transition"
+                        >
+                          <FiTrash2 className="text-xs" /> ลบ bot
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             );
           })

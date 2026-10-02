@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.routers import auth, bots, models, chat, approvals, upload, settings as settings_router, connectors, audit, computers
@@ -9,10 +9,17 @@ from app.services.computer_provider import computer_provider
 from app.services.storage_service import storage_service
 
 app = FastAPI(
-    title="Open Dots API",
-    description="Open-source alternative to OpenAI Dots: self-hosted AI workspace API with a configurable inference adapter",
-    version="1.0.0"
+    title="Dots by Pao API",
+    description="Self-hosted personal AI workspace API (forked from Open Dots) with a configurable inference adapter",
+    version="1.1.0"
 )
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    """Send browsers landing on the API root straight into the web client."""
+    target = (settings.CORS_ORIGINS or ["http://localhost:3000"])[0].rstrip("/") + "/app"
+    return RedirectResponse(url=target)
 
 PUBLIC_API_PATHS = {
     "/api/v1/health",

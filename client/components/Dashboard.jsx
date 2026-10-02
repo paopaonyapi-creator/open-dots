@@ -14,7 +14,8 @@ import {
   fetchModels,
   fetchChatHistory,
   fetchSettings,
-  updateBot
+  updateBot,
+  deleteBot
 } from '../lib/api';
 
 export default function Dashboard({ onLogout }) {
@@ -72,6 +73,31 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const handleRenameBot = async (botId, newName) => {
+    const trimmed = (newName || '').trim();
+    if (!trimmed) return;
+    try {
+      const updated = await updateBot(botId, { name: trimmed });
+      setBots((prev) => prev.map((b) => (b.id === botId ? updated : b)));
+    } catch (err) {
+      console.error('Failed to rename bot:', err);
+    }
+  };
+
+  const handleDeleteBot = async (botId) => {
+    try {
+      await deleteBot(botId);
+      const remaining = bots.filter((b) => b.id !== botId);
+      setBots(remaining);
+      if (activeBotId === botId) {
+        setActiveBotId(remaining[0]?.id || '');
+        if (!remaining.length) setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to delete bot:', err);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
@@ -88,6 +114,8 @@ export default function Dashboard({ onLogout }) {
         onSelectTab={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(!isSettingsOpen)}
         onOpenNewBot={() => setIsNewBotOpen(true)}
+        onRenameBot={handleRenameBot}
+        onDeleteBot={handleDeleteBot}
       />
 
       {/* Main Workspace Display Area */}
