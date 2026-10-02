@@ -19,6 +19,7 @@ import {
   fetchThreads,
   createThread,
   deleteThreadApi,
+  renameThread,
   updateBot,
   deleteBot,
   setBotMemory
@@ -177,6 +178,16 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const handleRenameThread = async (threadId, title) => {
+    if (!activeBotId || !title) return;
+    try {
+      const updated = await renameThread(activeBotId, threadId, title);
+      setThreads((prev) => prev.map((t) => (t.id === threadId ? updated : t)));
+    } catch (err) {
+      console.error('Failed to rename thread:', err);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
@@ -211,6 +222,7 @@ export default function Dashboard({ onLogout }) {
             onSelectThread={(id) => setActiveThreadId(id)}
             onCreateThread={handleCreateThread}
             onDeleteThread={handleDeleteThread}
+            onRenameThread={handleRenameThread}
             onUpdateBotModel={handleUpdateBotModel}
             onToggleComputer={() => setActiveTab('computer')}
             defaultModel={defaultModel}

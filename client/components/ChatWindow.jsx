@@ -5,7 +5,7 @@ import MessageItem from './MessageItem';
 import ApprovalCard from './ApprovalCard';
 import ModelPicker from './ModelPicker';
 import MascotAvatar from './MascotAvatar';
-import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload, FiMessageSquare, FiChevronDown, FiCheck, FiTrash2, FiSquare } from 'react-icons/fi';
+import { FiPlus, FiMic, FiMicOff, FiMonitor, FiX, FiImage, FiRotateCcw, FiDownload, FiMessageSquare, FiChevronDown, FiCheck, FiTrash2, FiSquare, FiEdit2 } from 'react-icons/fi';
 import {
   sendMessage,
   subscribeToChatStream,
@@ -36,8 +36,10 @@ function formatHeaderDate(msgs) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread }) {
+function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread, onRenameThread }) {
   const [open, setOpen] = React.useState(false);
+  const [editingId, setEditingId] = React.useState(null);
+  const [editValue, setEditValue] = React.useState('');
   const ref = React.useRef(null);
 
   React.useEffect(() => {
@@ -48,6 +50,13 @@ function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThre
 
   const active = (threads || []).find((t) => t.id === activeThreadId);
   const title = active?.title || 'แชทหลัก';
+
+  const submitRename = () => {
+    const value = editValue.trim();
+    if (editingId && value && onRenameThread) onRenameThread(editingId, value);
+    setEditingId(null);
+    setEditValue('');
+  };
 
   return (
     <div className="relative z-50" ref={ref} suppressHydrationWarning={true}>
@@ -76,26 +85,54 @@ function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThre
             {(threads || []).map((t) => {
               const isActive = t.id === activeThreadId;
               const isMain = t.id === t.bot_id;
+              const isEditing = editingId === t.id;
               return (
                 <div
                   key={t.id}
-                  onClick={() => { onSelectThread && onSelectThread(t.id); setOpen(false); }}
+                  onClick={() => { if (!isEditing) { onSelectThread && onSelectThread(t.id); setOpen(false); } }}
                   className={`group flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer glass-row ${isActive ? 'glass-row-active' : ''}`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[11px] font-medium truncate ${isActive ? 'text-white' : 'text-zinc-300'}`}>{t.title || 'แชท'}</p>
-                    <p className="text-[9px] text-zinc-500">{t.updated_at ? new Date(t.updated_at).toLocaleString() : ''}</p>
+                    {isEditing ? (
+                      <input
+                        autoFocus
+                        value={editValue}
+                        maxLength={120}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') submitRename();
+                          if (e.key === 'Escape') { setEditingId(null); setEditValue(''); }
+                        }}
+                        onBlur={submitRename}
+                        className="w-full bg-black/30 border border-[rgba(10,132,255,0.55)] rounded-md px-1.5 py-0.5 text-[11px] text-zinc-100 focus:outline-none"
+                      />
+                    ) : (
+                      <>
+                        <p className={`text-[11px] font-medium truncate ${isActive ? 'text-white' : 'text-zinc-300'}`}>{t.title || 'แชท'}</p>
+                        <p className="text-[9px] text-zinc-500">{t.updated_at ? new Date(t.updated_at).toLocaleString() : ''}</p>
+                      </>
+                    )}
                   </div>
-                  {!isMain && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDeleteThread && onDeleteThread(t.id); }}
-                      className="p-1 rounded-md text-zinc-500 hover:text-rose-300 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100"
-                      title="ลบเธรดนี้"
-                    >
-                      <FiTrash2 className="text-xs" />
-                    </button>
+                  {!isEditing && !isMain && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingId(t.id); setEditValue(t.title || ''); }}
+                        className="p-1 rounded-md text-zinc-500 hover:text-white hover:bg-white/10 transition opacity-0 group-hover:opacity-100"
+                        title="เปลี่ยนชื่อเธรด"
+                      >
+                        <FiEdit2 className="text-xs" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteThread && onDeleteThread(t.id); }}
+                        className="p-1 rounded-md text-zinc-500 hover:text-rose-300 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100"
+                        title="ลบเธรดนี้"
+                      >
+                        <FiTrash2 className="text-xs" />
+                      </button>
+                    </>
                   )}
-                  {isActive && <FiCheck className="text-xs text-[rgba(10,132,255,0.95)] flex-shrink-0" />}
+                  {isActive && !isEditing && <FiCheck className="text-xs text-[rgba(10,132,255,0.95)] flex-shrink-0" />}
                 </div>
               );
             })}
@@ -106,7 +143,44 @@ function ThreadsDropdown({ threads, activeThreadId, onSelectThread, onCreateThre
   );
 }
 
-export default function ChatWindow({ bot, models, messages, setMessages, threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread, onUpdateBotModel, onToggleComputer, defaultModel }) {
+function getSuggestedPrompts(botObj) {
+  const hay = `${botObj?.name || ''} ${botObj?.role || ''}`.toLowerCase();
+  if (hay.includes('stock') || hay.includes('metadata')) {
+    return [
+      'ทำ metadata สำหรับภาพ: ',
+      'สร้าง keywords 40 ตัวจากภาพนี้',
+      'แนะนำหมวดหมู่ Adobe Stock ที่เหมาะสม',
+    ];
+  }
+  if (hay.includes('code') || hay.includes('engineer') || hay.includes('codex') || hay.includes('architect')) {
+    return [
+      'รีวิวโค้ดชิ้นนี้ให้หน่อย',
+      'ช่วยแก้บัคนี้ให้ที',
+      'อธิบายโค้ดส่วนนี้ทีละขั้น',
+    ];
+  }
+  if (hay.includes('translat')) {
+    return [
+      'แปลข้อความนี้เป็นอังกฤษ: ',
+      'แปลเป็นภาษาไทยโทนการตลาด: ',
+      'เช็คคำแปลนี้ให้เป็นธรรมชาติขึ้นไหม',
+    ];
+  }
+  if (hay.includes('writ') || hay.includes('copy')) {
+    return [
+      'ร่างโพสต์ IG สั้นๆ เรื่อง: ',
+      'ช่วยเขียนอีเมลตอบลูกค้า: ',
+      'ช่วยคิดชื่อแคมเปญใหม่',
+    ];
+  }
+  return [
+    'แนะนำตัวและความสามารถหน่อย',
+    'ช่วยระดมไอเดียเรื่อง: ',
+    'สรุปสิ่งที่คุณช่วยได้บ้าง',
+  ];
+}
+
+export default function ChatWindow({ bot, models, messages, setMessages, threads, activeThreadId, onSelectThread, onCreateThread, onDeleteThread, onRenameThread, onUpdateBotModel, onToggleComputer, defaultModel }) {
   const [inputPrompt, setInputPrompt] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -369,6 +443,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
             onSelectThread={onSelectThread}
             onCreateThread={onCreateThread}
             onDeleteThread={onDeleteThread}
+            onRenameThread={onRenameThread}
           />
 
           <button
@@ -464,6 +539,21 @@ export default function ChatWindow({ bot, models, messages, setMessages, threads
           {activeMessages.map((msg) => (
             <MessageItem key={msg.id} message={msg} />
           ))}
+
+          {messages.length === 0 && !isStreaming && (
+            <div className="flex flex-wrap gap-2 justify-center my-5 animate-fade-in">
+              {getSuggestedPrompts(bot).map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => setInputPrompt(prompt)}
+                  className="liquid-glass glass-hover rounded-full px-3.5 py-2 text-[11px] text-zinc-300 transition"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
 
           {isStreaming && (
             <div className="flex justify-start items-center gap-3 my-3 animate-fade-in">
