@@ -31,7 +31,8 @@ export default function Sidebar({
   onOpenSettings,
   onOpenNewBot,
   onRenameBot,
-  onDeleteBot
+  onDeleteBot,
+  onOpenMemory
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [menuBotId, setMenuBotId] = useState(null);
@@ -201,6 +202,14 @@ export default function Sidebar({
                             {botItem.name}
                           </h3>
                         )}
+                        {!isRenaming && (botItem.originalBot?.memory?.length > 0) && (
+                          <span
+                            className="flex-shrink-0 text-[9px] font-semibold px-1 py-0.5 rounded-full bg-[rgba(10,132,255,0.18)] text-[rgba(10,132,255,0.95)] border border-[rgba(10,132,255,0.35)]"
+                            title={`${botItem.originalBot.memory.length} ความจำระยะยาว`}
+                          >
+                            🧠{botItem.originalBot.memory.length}
+                          </span>
+                        )}
                         {!isRenaming && botItem.time && (
                           <span className="text-[10px] text-zinc-500 font-normal flex-shrink-0">
                             {botItem.time}
@@ -245,6 +254,18 @@ export default function Sidebar({
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-zinc-200 hover:bg-white/10 transition"
                         >
                           <FiEdit2 className="text-xs" /> เปลี่ยนชื่อ
+                        </button>
+                        <button
+                          onClick={() => {
+                            onOpenMemory && onOpenMemory(botItem.originalBot);
+                            setMenuBotId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-zinc-200 hover:bg-white/10 transition"
+                        >
+                          <span className="text-xs">🧠</span> ความจำ
+                          {botItem.originalBot?.memory?.length > 0 && (
+                            <span className="ml-auto text-[10px] text-[rgba(10,132,255,0.95)]">{botItem.originalBot.memory.length}</span>
+                          )}
                         </button>
                         <button
                           onClick={() => {

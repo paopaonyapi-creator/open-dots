@@ -10,13 +10,46 @@ from app.services.storage_service import storage_service
 
 router = APIRouter(prefix="/api/v1/bots", tags=["bots"])
 
+MEMORY_CAP = 50
+
+
+def _apply_memory(bot: Dict[str, Any], facts: List[str]) -> Dict[str, Any]:
+    cleaned = []
+    for fact in facts:
+        if not isinstance(fact, str):
+            continue
+        text = fact.strip()
+        if text and text not in cleaned:
+            cleaned.append(text)
+    bot["memory"] = cleaned[-MEMORY_CAP:]
+    return bot
+
+
 @router.get("", response_model=List[Bot])
 async def get_bots():
     return storage_service.get_bots()
 
+
+@router.put("/{bot_id}/memory", response_model=Bot)
+async def set_bot_memory(bot_id: str, payload: Dict[str, Any]):
+    facts = payload.get("memory")
+    if not isinstance(facts, list):
+        raise HTTPException(status_code=422, detail="Body must be {\"memory\": [\"fact\", ...]}.")
+    bots = storage_service.get_bots()
+    for i, b in enumerate(bots):
+        if b["id"] == bot_id:
+            candidate = _apply_memory({**b}, facts)
+            try:
+                bots[i] = Bot.model_validate(candidate).model_dump()
+            except ValidationError as exc:
+                raise HTTPException(status_code=422, detail=exc.errors()) from exc
+            storage_service.save_bots(bots)
+            return bots[i]
+    raise HTTPException(status_code=404, detail="Bot not found")
+
 @router.post("", response_model=Bot)
 async def create_bot(bot_data: Dict[str, Any]):
-    allowed = {"name", "role", "description", "avatar", "model", "accent_color", "system_prompt", "tools", "pinned", "unread_count"}
+    allowed = {"name", "role", "description", "avatar", "model", "accent_color", "system_prompt", "tools", "pinned", "unread_count", "memory"}
     unknown = set(bot_data) - allowed
     if unknown:
         raise HTTPException(status_code=422, detail=f"Unsupported bot fields: {', '.join(sorted(unknown))}")
@@ -33,6 +66,7 @@ async def create_bot(bot_data: Dict[str, Any]):
         "accent_color": bot_data.get("accent_color", "#3b82f6"),
         "system_prompt": bot_data.get("system_prompt", "You are a helpful AI assistant."),
         "tools": bot_data.get("tools", []),
+        "memory": [],
         "pinned": False,
         "unread_count": 0,
         "created_at": datetime.now().isoformat()
@@ -48,7 +82,7 @@ async def create_bot(bot_data: Dict[str, Any]):
 
 @router.put("/{bot_id}", response_model=Bot)
 async def update_bot(bot_id: str, updates: Dict[str, Any]):
-    allowed = {"name", "role", "description", "avatar", "model", "accent_color", "system_prompt", "tools", "pinned", "unread_count"}
+    allowed = {"name", "role", "description", "avatar", "model", "accent_color", "system_prompt", "tools", "pinned", "unread_count", "memory"}
     unknown = set(updates) - allowed
     if unknown:
         raise HTTPException(status_code=422, detail=f"Unsupported bot fields: {', '.join(sorted(unknown))}")

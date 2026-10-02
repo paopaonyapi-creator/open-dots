@@ -8,6 +8,7 @@ import Marketplace from './Marketplace';
 import AuditPanel from './AuditPanel';
 import AppSettingsDrawer from './AppSettingsDrawer';
 import NewBotModal from './NewBotModal';
+import MemoryModal from './MemoryModal';
 
 import {
   fetchBots,
@@ -15,7 +16,8 @@ import {
   fetchChatHistory,
   fetchSettings,
   updateBot,
-  deleteBot
+  deleteBot,
+  setBotMemory
 } from '../lib/api';
 
 export default function Dashboard({ onLogout }) {
@@ -26,6 +28,7 @@ export default function Dashboard({ onLogout }) {
   const [messages, setMessages] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewBotOpen, setIsNewBotOpen] = useState(false);
+  const [memoryBot, setMemoryBot] = useState(null);
   const [defaultModel, setDefaultModel] = useState('gpt-5-mini');
   const [userName, setUserName] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -98,6 +101,11 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const handleSetMemory = async (botId, memory) => {
+    const updated = await setBotMemory(botId, memory);
+    setBots((prev) => prev.map((b) => (b.id === botId ? updated : b)));
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
@@ -116,6 +124,7 @@ export default function Dashboard({ onLogout }) {
         onOpenNewBot={() => setIsNewBotOpen(true)}
         onRenameBot={handleRenameBot}
         onDeleteBot={handleDeleteBot}
+        onOpenMemory={(bot) => setMemoryBot(bot)}
       />
 
       {/* Main Workspace Display Area */}
@@ -166,6 +175,13 @@ export default function Dashboard({ onLogout }) {
           setActiveBotId(newBot.id);
           setActiveTab('chat');
         }}
+      />
+
+      {/* Long-term Memory Modal */}
+      <MemoryModal
+        bot={memoryBot}
+        onClose={() => setMemoryBot(null)}
+        onSave={handleSetMemory}
       />
     </div>
   );

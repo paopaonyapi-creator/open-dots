@@ -64,6 +64,10 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
     
     raw_prompt = current_bot["system_prompt"] if current_bot else "You are a helpful AI assistant."
     current_time_str = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+    memory_lines = (current_bot.get("memory") or []) if current_bot else []
+    if memory_lines:
+        memory_block = "## Long-term memory about the user (saved via /remember — treat as established facts)\n" + "\n".join(f"- {line}" for line in memory_lines)
+        raw_prompt = f"{memory_block}\n\n{raw_prompt}"
     system_prompt = f"Current Date & Time: {current_time_str}.\n\n{raw_prompt}"
     selected_model = model or (current_bot["model"] if current_bot else "gpt-5-mini")
 
@@ -75,6 +79,11 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
                 "content": m.get("text", ""),
                 "image_url": m.get("image_url")
             })
+
+    # Context window cap: long threads must not blow up the provider token budget.
+    MAX_CONTEXT_MESSAGES = 40
+    if len(formatted_history) > MAX_CONTEXT_MESSAGES:
+        formatted_history = formatted_history[-MAX_CONTEXT_MESSAGES:]
 
 
     async def event_generator():
@@ -89,6 +98,45 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
         }
 
         last_user_text = formatted_history[-1]["content"] if formatted_history else ""
+
+        # /remember and /forget are handled locally: instant, free, no model call.
+        stripped_command = last_user_text.strip()
+        lowered_command = stripped_command.lower()
+        if lowered_command.startswith("/remember") or lowered_command == "/forget":
+            bots_now = storage_service.get_bots()
+            bot_index = next((i for i, b in enumerate(bots_now) if b["id"] == thread_id), None)
+            if lowered_command == "/forget":
+                removed = 0
+                if bot_index is not None:
+                    removed = len(bots_now[bot_index].get("memory") or [])
+                    bots_now[bot_index]["memory"] = []
+                    storage_service.save_bots(bots_now)
+                confirmation = f"🧠 ล้างความจำแล้ว ({removed} ข้อ)"
+            else:
+                fact = stripped_command[len("/remember"):].strip()
+                if not fact:
+                    confirmation = "ใช้แบบนี้: /remember <สิ่งที่อยากให้จำ>"
+                elif bot_index is None:
+                    confirmation = "ยังไม่พบ bot สำหรับบันทึกความจำ"
+                else:
+                    memory_list = list(bots_now[bot_index].get("memory") or [])
+                    if fact in memory_list:
+                        confirmation = f"🧠 จำอยู่แล้ว: {fact}"
+                    else:
+                        memory_list.append(fact)
+                        bots_now[bot_index]["memory"] = memory_list[-50:]
+                        storage_service.save_bots(bots_now)
+                        confirmation = f"🧠 จำแล้ว ({len(memory_list)}/50): {fact}"
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "content.delta", "botMsgId": bot_msg_id, "delta": confirmation})
+            }
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "turn.completed", "ok": True, "botMsgId": bot_msg_id})
+            }
+            return
+
         try:
             action_call = parse_workspace_command(last_user_text)
             if action_call is None:

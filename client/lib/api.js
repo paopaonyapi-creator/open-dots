@@ -141,6 +141,16 @@ export async function clearChatHistory(threadId) {
   return res.json();
 }
 
+export async function setBotMemory(botId, memory) {
+  const res = await apiFetch(`${API_BASE_URL}/bots/${botId}/memory`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ memory }),
+  });
+  if (!res.ok) throw new Error('Failed to update bot memory');
+  return res.json();
+}
+
 export async function sendMessage(threadId, botId, text, model = 'gpt-5-mini', imageUrl = null) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/chat/send`, {

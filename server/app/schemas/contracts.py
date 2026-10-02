@@ -15,6 +15,7 @@ class Bot(BaseModel):
     tools: List[str] = Field(default_factory=list)
     pinned: bool = False
     unread_count: int = 0
+    memory: List[str] = Field(default_factory=list)
     created_at: str
 
 class Message(BaseModel):
