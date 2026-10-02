@@ -1,4 +1,36 @@
-# Open Dots: Open-Source Personal AI Agent Workspace
+# Dots by Pao — Personal AI Agent Workspace
+
+> **Fork ภาษาไทยของ [Open Dots](https://github.com/Anil-matcha/open-dots) (MIT)** — ปรับแต่งและเพิ่มฟีเจอร์สำหรับใช้งานจริงในเครื่อง ธีม Apple Liquid Glass ทั้งแอป
+
+## ฟีเจอร์ที่เพิ่มจากต้นฉบับ (Dots by Pao)
+
+- 💬 **หลายบทสนทนาต่อ bot** — สร้าง/สลับ/เปลี่ยนชื่อ/ลบเธรด พร้อมตั้งชื่ออัตโนมัติจากข้อความแรก (เธรดหลักเดิม migrate ให้อัตโนมัติ)
+- 🧠 **ความจำระยะยาว** — สั่ง `/remember <ข้อเท็จจริง>` ในแชท bot จะจำได้ตลอด (ฉีดเข้า system prompt ทุก turn, เก็บสูงสุด 50 ข้อ) `/forget` เพื่อล้าง จัดการผ่านเมนู ⋯ → 🧠 (badge บอกจำนวน)
+- 🔍 **ค้นหาทุกบทสนทนา** — **Ctrl+K** ค้นหาข้อความข้ามทุกเธรดทุก bot คลิกผลลัพธ์เพื่อไปเธรดนั้น
+- ⬇️ **Export แชทเป็น Markdown** — ปุ่มเดียวได้ไฟล์ .md
+- ⏹️ **หยุดสตรีม** — หยุดการตอบกลางคันได้
+- ⚙️ **ตั้งค่า bot** — แก้ชื่อ/บทบาท/**system prompt**/โมเดล/avatar ได้หลังสร้าง (ความจำและประวัติไม่หาย)
+- 🔊 **อ่านออกเสียง** — ปุ่มฟังข้อความ bot (เสียงไทย)
+- 🎨 **Apple Liquid Glass** ทุกหน้า + หน้า root ของ API พาเข้าแอป
+- 🤖 **Live model discovery** — ดึงรายชื่อโมเดลจริงจาก provider แบบ OpenAI Responses-compatible อัตโนมัติ (เชื่อมกับ local gateway เช่น opencodex ได้ทันที)
+- 🧩 **Bot presets** — สร้าง bot จากเทมเพลตสำเร็จรูป เช่น 📸 Adobe Stock Metadata Pro
+
+## วิธีรัน (Windows)
+
+```bat
+:: ครั้งเดียว
+cd open-dots\server && python -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt
+cd ..\client && npm install
+
+:: ตั้งค่า provider ใน server\.env (MODEL_API_KEY / MODEL_API_BASE_URL) แล้ว
+start-open-dots.bat   :: เปิดทั้ง API (8000) + เว็บ (3000) แล้วเปิดเบราว์เซอร์
+```
+
+ล็อกอินด้วย owner token จาก `%USERPROFILE%\.open-dots\.auth-token` · ตั้งค่า provider เพิ่มเติมได้ในหน้า Settings ของเว็บ (เก็บเข้ารหัส)
+
+---
+
+# Open Dots: Open-Source Personal AI Agent Workspace (upstream)
 
 
 <p align="center">

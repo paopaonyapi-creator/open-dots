@@ -94,16 +94,21 @@ export default function Dashboard({ onLogout }) {
   const activeBot = bots.find((b) => b.id === activeBotId) || bots[0];
 
   // Ctrl+K opens global chat search from anywhere.
+  // Ctrl+Shift+O starts a new conversation thread in the active bot.
   useEffect(() => {
     const onKey = (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setSearchOpen(true);
       }
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        handleCreateThread();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  });
 
   const handleSearchSelect = (hit) => {
     if (hit.bot_id) {
